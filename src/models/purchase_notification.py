@@ -1,5 +1,6 @@
 import datetime
 from dataclasses import dataclass
+import uuid
 
 
 @dataclass
@@ -8,9 +9,7 @@ class PurchaseNotification:
     product_name: str
     product_category: str
     price: float
-    quantity: int
     customer_id: int
+    quantity: int
     order_date: datetime
-    order_id: int
-
-
+    order_id: uuid
