@@ -1,0 +1,9 @@
+rabbitmq:
+  url: "amqp://guest:guest@localhost:5672/"
+  queue: "purchase_notifications"
+  routing_key: 'purchase_notifications'
+  exchange: ''
+
+logging:
+  level: "DEBUG"
+  format: '%(levelname) -10s %(asctime)s %(name) -30s %(funcName) -35s %(lineno) -5d: %(message)s'
