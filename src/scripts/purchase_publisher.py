@@ -1,4 +1,3 @@
-import time
 import pika
 import json
 import logging
@@ -6,11 +5,12 @@ import random
 from dataclasses import asdict
 from src.scripts.create__purchase_notification import create_purchase_notification
 
-
 LOGGER = logging.getLogger(__name__)
 
 
 class PurchasePublisher:
+    RECONNECT_DELAY = 5
+
     def __init__(self, amqp_url, queue_name, routing_key, exchange=''):
         self._connection = None
         self._channel = None
@@ -37,13 +37,10 @@ class PurchasePublisher:
                 self._connection.ioloop.start()
             except KeyboardInterrupt:
                 self.stop()
+                if (self._connection is not None and
+                        not self._connection.is_closed):
+                    self._connection.ioloop.start()
                 break
-            except Exception as e:
-                if not self._stopping:
-                    LOGGER.error("Connection lost or failed: %s. Retrying in 5s...", e)
-                    time.sleep(5)
-                else:
-                    break
 
         LOGGER.info('Publisher loop finished.')
 
@@ -62,7 +59,7 @@ class PurchasePublisher:
         self._connection.channel(on_open_callback=self.on_channel_open)
 
     def on_connection_open_error(self, conn, error):
-        LOGGER.error('Connection open failed, reopening in 5 seconds: %s', error)
+        LOGGER.error('Connection open failed, reopening in %i seconds: %s', self.RECONNECT_DELAY, error)
         self._connection.ioloop.call_later(5, self._connection.ioloop.stop)
 
     def on_connection_closed(self, conn, reason):
@@ -70,7 +67,7 @@ class PurchasePublisher:
         if self._stopping:
             self._connection.ioloop.stop()
         else:
-            LOGGER.warning('Connection closed, reopening in 5 seconds: %s',
+            LOGGER.warning('Connection closed, reopening in %i seconds: %s',self.RECONNECT_DELAY,
                            reason)
             self._connection.ioloop.call_later(5, self._connection.ioloop.stop)
 
@@ -157,6 +154,5 @@ class PurchasePublisher:
     def stop(self):
         LOGGER.info('Stopping...')
         self._stopping = True
+        self._channel.close()
         self._connection.close()
-
-
