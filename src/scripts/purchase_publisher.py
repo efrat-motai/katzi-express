@@ -41,6 +41,8 @@ class PurchasePublisher:
                         not self._connection.is_closed):
                     self._connection.ioloop.start()
                 break
+            except Exception as e:
+                LOGGER.error("Main loop crashed: %s", e)
 
         LOGGER.info('Publisher loop finished.')
 
@@ -84,7 +86,8 @@ class PurchasePublisher:
     def on_channel_closed(self, channel, reason):
         LOGGER.warning('Channel %i was closed: %s', channel, reason)
         self._channel = None
-        self._connection.close()
+        if not self._stopping:
+            self._connection.close()
 
     def on_queue_declared(self, _unused_frame):
         LOGGER.info("Queue ready. Enabling publisher confirms.")
