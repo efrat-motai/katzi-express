@@ -1,5 +1,4 @@
 import functools
-
 import pika
 import json
 import logging
@@ -13,7 +12,7 @@ LOGGER = logging.getLogger(__name__)
 class PurchasePublisher:
     RECONNECT_DELAY = 5
 
-    def __init__(self, amqp_url, queue_name, routing_key, exchange='', exchange_type='direct', ):
+    def __init__(self, amqp_url, queue_name, routing_key=None, exchange='', exchange_type='direct'):
         self._connection = None
         self._channel = None
         self._deliveries = {}
@@ -22,7 +21,7 @@ class PurchasePublisher:
         self._message_number = 0
         self._url = amqp_url
         self.queue = queue_name
-        self.routing_key = routing_key
+        self.routing_key = routing_key or queue_name
         self.exchange = exchange
         self.exchange_type = exchange_type
         self._stopping = False
