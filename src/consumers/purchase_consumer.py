@@ -4,8 +4,6 @@ import time
 import pika
 from pika.exchange_type import ExchangeType
 
-LOG_FORMAT = ('%(levelname) -10s %(asctime)s %(name) -30s %(funcName) '
-              '-35s %(lineno) -5d: %(message)s')
 LOGGER = logging.getLogger(__name__)
 
 
@@ -14,7 +12,6 @@ class PurchaseConsumer:
     def __init__(self, amqp_url, queue_name, routing_key=None, exchange='', exchange_type='direct'):
         self.should_reconnect = False
         self.was_consuming = False
-
         self._connection = None
         self._channel = None
         self._closing = False
@@ -166,36 +163,3 @@ class PurchaseConsumer:
             else:
                 self._connection.ioloop.stop()
             LOGGER.info('Stopped')
-
-
-class ReconnectingExampleConsumer:
-
-    def __init__(self, amqp_url):
-        self._reconnect_delay = 0
-        self._amqp_url = amqp_url
-        self._consumer = PurchaseConsumer(self._amqp_url)
-
-    def run(self):
-        while True:
-            try:
-                self._consumer.run()
-            except KeyboardInterrupt:
-                self._consumer.stop()
-                break
-            self._maybe_reconnect()
-
-    def _maybe_reconnect(self):
-        if self._consumer.should_reconnect:
-            self._consumer.stop()
-            reconnect_delay = self._get_reconnect_delay()
-            LOGGER.info('Reconnecting after %d seconds', reconnect_delay)
-            time.sleep(reconnect_delay)
-            self._consumer = PurchaseConsumer(self._amqp_url)
-
-    def _get_reconnect_delay(self):
-        if self._consumer.was_consuming:
-            self._reconnect_delay = 0
-        else:
-            self._reconnect_delay += 1
-            self._reconnect_delay %= 31
-        return self._reconnect_delay
