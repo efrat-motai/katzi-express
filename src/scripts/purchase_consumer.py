@@ -9,13 +9,9 @@ LOG_FORMAT = ('%(levelname) -10s %(asctime)s %(name) -30s %(funcName) '
 LOGGER = logging.getLogger(__name__)
 
 
-class ExampleConsumer(object):
-    EXCHANGE = 'message'
-    EXCHANGE_TYPE = ExchangeType.topic
-    QUEUE = 'text'
-    ROUTING_KEY = 'example.text'
+class PurchaseConsumer:
 
-    def __init__(self, amqp_url):
+    def __init__(self, amqp_url,queue_name, routing_key=None, exchange='', exchange_type='direct'):
         self.should_reconnect = False
         self.was_consuming = False
 
@@ -24,9 +20,11 @@ class ExampleConsumer(object):
         self._closing = False
         self._consumer_tag = None
         self._url = amqp_url
+        self._queue_name = queue_name
+        self._routing_key = routing_key or queue_name
+        self._exchange = exchange
+        self._exchange_type = exchange_type
         self._consuming = False
-        # In production, experiment with higher prefetch values
-        # for higher consumer throughput
         self._prefetch_count = 1
 
     def connect(self):
