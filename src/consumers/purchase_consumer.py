@@ -11,7 +11,7 @@ LOGGER = logging.getLogger(__name__)
 
 class PurchaseConsumer:
 
-    def __init__(self, amqp_url,queue_name, routing_key=None, exchange='', exchange_type='direct'):
+    def __init__(self, amqp_url, queue_name, routing_key=None, exchange='', exchange_type='direct'):
         self.should_reconnect = False
         self.was_consuming = False
 
@@ -126,54 +126,22 @@ class PurchaseConsumer:
         self._channel.close()
 
     def on_message(self, _unused_channel, basic_deliver, properties, body):
-        """Invoked by pika when a message is delivered from RabbitMQ. The
-        channel is passed for your convenience. The basic_deliver object that
-        is passed in carries the exchange, routing key, delivery tag and
-        a redelivered flag for the message. The properties passed in is an
-        instance of BasicProperties with the message properties and the body
-        is the message that was sent.
-
-        :param pika.channel.Channel _unused_channel: The channel object
-        :param pika.Spec.Basic.Deliver: basic_deliver method
-        :param pika.Spec.BasicProperties: properties
-        :param bytes body: The message body
-
-        """
         LOGGER.info('Received message # %s from %s: %s',
                     basic_deliver.delivery_tag, properties.app_id, body)
         self.acknowledge_message(basic_deliver.delivery_tag)
 
     def acknowledge_message(self, delivery_tag):
-        """Acknowledge the message delivery from RabbitMQ by sending a
-        Basic.Ack RPC method for the delivery tag.
-
-        :param int delivery_tag: The delivery tag from the Basic.Deliver frame
-
-        """
         LOGGER.info('Acknowledging message %s', delivery_tag)
         self._channel.basic_ack(delivery_tag)
 
     def stop_consuming(self):
-        """Tell RabbitMQ that you would like to stop consuming by sending the
-        Basic.Cancel RPC command.
-
-        """
         if self._channel:
             LOGGER.info('Sending a Basic.Cancel RPC command to RabbitMQ')
             cb = functools.partial(
-                self.on_cancelok, userdata=self._consumer_tag)
+                self.on_cancel_ok, userdata=self._consumer_tag)
             self._channel.basic_cancel(self._consumer_tag, cb)
 
-    def on_cancelok(self, _unused_frame, userdata):
-        """This method is invoked by pika when RabbitMQ acknowledges the
-        cancellation of a consumer. At this point we will close the channel.
-        This will invoke the on_channel_closed method once the channel has been
-        closed, which will in-turn close the connection.
-
-        :param pika.frame.Method _unused_frame: The Basic.CancelOk frame
-        :param str|unicode userdata: Extra user data (consumer tag)
-
-        """
+    def on_cancel_ok(self, _unused_frame, userdata):
         self._consuming = False
         LOGGER.info(
             'RabbitMQ acknowledged the cancellation of the consumer: %s',
@@ -181,10 +149,6 @@ class PurchaseConsumer:
         self.close_channel()
 
     def close_channel(self):
-        """Call to close the channel with RabbitMQ cleanly by issuing the
-        Channel.Close RPC command.
-
-        """
         LOGGER.info('Closing the channel')
         self._channel.close()
 
@@ -193,16 +157,6 @@ class PurchaseConsumer:
         self._connection.ioloop.start()
 
     def stop(self):
-        """Cleanly shutdown the connection to RabbitMQ by stopping the consumer
-        with RabbitMQ. When RabbitMQ confirms the cancellation, on_cancelok
-        will be invoked by pika, which will then closing the channel and
-        connection. The IOLoop is started again because this method is invoked
-        when CTRL-C is pressed raising a KeyboardInterrupt exception. This
-        exception stops the IOLoop which needs to be running for pika to
-        communicate with RabbitMQ. All of the commands issued prior to starting
-        the IOLoop will be buffered but not processed.
-
-        """
         if not self._closing:
             self._closing = True
             LOGGER.info('Stopping')
@@ -214,16 +168,12 @@ class PurchaseConsumer:
             LOGGER.info('Stopped')
 
 
-class ReconnectingExampleConsumer(object):
-    """This is an example consumer that will reconnect if the nested
-    ExampleConsumer indicates that a reconnect is necessary.
-
-    """
+class ReconnectingExampleConsumer:
 
     def __init__(self, amqp_url):
         self._reconnect_delay = 0
         self._amqp_url = amqp_url
-        self._consumer = ExampleConsumer(self._amqp_url)
+        self._consumer = PurchaseConsumer(self._amqp_url)
 
     def run(self):
         while True:
@@ -240,24 +190,12 @@ class ReconnectingExampleConsumer(object):
             reconnect_delay = self._get_reconnect_delay()
             LOGGER.info('Reconnecting after %d seconds', reconnect_delay)
             time.sleep(reconnect_delay)
-            self._consumer = ExampleConsumer(self._amqp_url)
+            self._consumer = PurchaseConsumer(self._amqp_url)
 
     def _get_reconnect_delay(self):
         if self._consumer.was_consuming:
             self._reconnect_delay = 0
         else:
             self._reconnect_delay += 1
-        if self._reconnect_delay > 30:
-            self._reconnect_delay = 30
+            self._reconnect_delay %= 31
         return self._reconnect_delay
-
-
-def main():
-    logging.basicConfig(level=logging.DEBUG, format=LOG_FORMAT)
-    amqp_url = 'amqp://guest:guest@localhost:5672/%2F'
-    consumer = ReconnectingExampleConsumer(amqp_url)
-    consumer.run()
-
-
-if __name__ == '__main__':
-    main()
