@@ -10,8 +10,6 @@ def main():
     publisher = PurchasePublisher(
         amqp_url=config['rabbitmq']['url'],
         queue_name=config['rabbitmq']['queue'],
-        routing_key=config['rabbitmq']['routing_key'],
-        exchange=config['rabbitmq'].get('exchange', '')
     )
     publisher.run()
 
