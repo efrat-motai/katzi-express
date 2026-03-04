@@ -105,59 +105,22 @@ class PurchaseConsumer:
         self.set_qos()
 
     def set_qos(self):
-        """This method sets up the consumer prefetch to only be delivered
-        one message at a time. The consumer must acknowledge this message
-        before RabbitMQ will deliver another one. You should experiment
-        with different prefetch values to achieve desired performance.
-
-        """
         self._channel.basic_qos(
             prefetch_count=self._prefetch_count, callback=self.on_basic_qos_ok)
 
     def on_basic_qos_ok(self, _unused_frame):
-        """Invoked by pika when the Basic.QoS method has completed. At this
-        point we will start consuming messages by calling start_consuming
-        which will invoke the needed RPC commands to start the process.
-
-        :param pika.frame.Method _unused_frame: The Basic.QosOk response frame
-
-        """
         LOGGER.info('QOS set to: %d', self._prefetch_count)
         self.start_consuming()
 
     def start_consuming(self):
-        """This method sets up the consumer by first calling
-        add_on_cancel_callback so that the object is notified if RabbitMQ
-        cancels the consumer. It then issues the Basic.Consume RPC command
-        which returns the consumer tag that is used to uniquely identify the
-        consumer with RabbitMQ. We keep the value to use it when we want to
-        cancel consuming. The on_message method is passed in as a callback pika
-        will invoke when a message is fully received.
-
-        """
         LOGGER.info('Issuing consumer related RPC commands')
-        self.add_on_cancel_callback()
+        self._channel.add_on_cancel_callback(self.on_consumer_cancelled)
         self._consumer_tag = self._channel.basic_consume(
-            self.QUEUE, self.on_message)
+            self._queue_name, self.on_message)
         self.was_consuming = True
         self._consuming = True
 
-    def add_on_cancel_callback(self):
-        """Add a callback that will be invoked if RabbitMQ cancels the consumer
-        for some reason. If RabbitMQ does cancel the consumer,
-        on_consumer_cancelled will be invoked by pika.
-
-        """
-        LOGGER.info('Adding consumer cancellation callback')
-        self._channel.add_on_cancel_callback(self.on_consumer_cancelled)
-
     def on_consumer_cancelled(self, method_frame):
-        """Invoked by pika when RabbitMQ sends a Basic.Cancel for a consumer
-        receiving messages.
-
-        :param pika.frame.Method method_frame: The Basic.Cancel frame
-
-        """
         LOGGER.info('Consumer was cancelled remotely, shutting down: %r',
                     method_frame)
         self._channel.close()
