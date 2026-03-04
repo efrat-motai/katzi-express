@@ -19,9 +19,9 @@ class PurchasePublisher:
         self._nacked = 0
         self._message_number = 0
         self._url = amqp_url
-        self.QUEUE = queue_name
-        self.ROUTING_KEY = routing_key
-        self.EXCHANGE = exchange
+        self.queue = queue_name
+        self.routing_key = routing_key
+        self.exchange = exchange
         self._stopping = False
 
     def run(self):
@@ -78,7 +78,7 @@ class PurchasePublisher:
         self._channel = channel
         self._channel.add_on_close_callback(self.on_channel_closed)
         self._channel.queue_declare(
-            queue=self.QUEUE,
+            queue=self.queue,
             durable=True,
             callback=self.on_queue_declared
         )
@@ -130,7 +130,7 @@ class PurchasePublisher:
 
         new_purchase = create_purchase_notification()
         payload = json.dumps(asdict(new_purchase), default=lambda o: o.isoformat())
-        self._channel.basic_publish(self.EXCHANGE, self.ROUTING_KEY,
+        self._channel.basic_publish(self.exchange, self.routing_key,
                                     body=payload,
                                     properties=pika.BasicProperties(
                                         content_type="application/json",
@@ -145,7 +145,7 @@ class PurchasePublisher:
     def resend_pending_messages(self):
         LOGGER.info('Resending %i pending messages', len(self._deliveries))
         for tag in sorted(self._deliveries.keys()):
-            self._channel.basic_publish(self.EXCHANGE, self.ROUTING_KEY,
+            self._channel.basic_publish(self.exchange, self.routing_key,
                                         body=self._deliveries[tag],
                                         properties=pika.BasicProperties(
                                             content_type="application/json",
