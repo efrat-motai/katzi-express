@@ -111,8 +111,8 @@ class PurchasePublisher:
     def on_channel_closed(self, channel, reason):
         LOGGER.warning('Channel %i was closed: %s', channel, reason)
         self._channel = None
-        if not self._stopping:
-            self._connection.close()
+        if not self._stopping :
+            self.close_connection()
 
     def on_bind_ok(self, _unused_frame):
         LOGGER.info("Queue bound. Enabling publisher confirms.")
@@ -182,5 +182,15 @@ class PurchasePublisher:
     def stop(self):
         LOGGER.info('Stopping...')
         self._stopping = True
-        self._channel.close()
-        self._connection.close()
+        self.close_channel()
+        self.close_connection()
+
+    def close_channel(self):
+        if self._channel is not None:
+            LOGGER.info('Closing the channel')
+            self._channel.close()
+
+    def close_connection(self):
+        if self._connection is not None and self._connection.is_open:
+            LOGGER.info('Closing connection')
+            self._connection.close()
