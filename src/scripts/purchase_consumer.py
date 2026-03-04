@@ -67,15 +67,47 @@ class PurchaseConsumer:
         LOGGER.info(f"Channel opened")
         self._channel = channel
         self._channel.add_on_close_callback(self.on_channel_closed)
-        self._channel.queue_declare(
-            queue=self.QUEUE,
-            durable=True,
-            callback=self.on_queue_declared
-        )
+        self.setup_exchange(self.exchange)
+
+    def setup_exchange(self, exchange_name):
+        LOGGER.info('Declaring exchange: %s', exchange_name)
+        cb = functools.partial(self.on_exchange_declare_ok,
+                               userdata=exchange_name)
+        self._channel.exchange_declare(
+            exchange=exchange_name,
+            exchange_type=self.exchange_type,
+            callback=cb)
+
+    def on_exchange_declare_ok(self, _unused_frame, userdata):
+        LOGGER.info('Exchange declared: %s', userdata)
+        self.setup_queue(self.queue)
+
+    def setup_queue(self, queue_name):
+        LOGGER.info('Declaring queue %s', queue_name)
+        self._channel.queue_declare(queue=queue_name,
+                                    durable=True,
+                                    callback=self.on_queue_declare_ok)
+
+    def on_queue_declare_ok(self, _unused_frame):
+        LOGGER.info('Binding %s to %s with %s', self.exchange, self.queue,
+                    self.routing_key)
+        self._channel.queue_bind(self.queue,
+                                 self.exchange,
+                                 routing_key=self.routing_key,
+                                 callback=self.on_bind_ok)
 
     def on_channel_closed(self, channel, reason):
         LOGGER.warning('Channel %i was closed: %s', channel, reason)
-        self.close_connection()
+        self._channel = None
+        if not self._stopping:
+            self._connection.close()
+
+    def on_bind_ok(self, _unused_frame):
+        LOGGER.info("Queue bound. Enabling publisher confirms.")
+        self._channel.confirm_delivery(ack_nack_callback=self.on_delivery_confirmation)
+        if self._deliveries:
+            self.resend_pending_messages()
+        self.schedule_next_message()
 
     def on_queue_declared(self, _unused_frame):
         LOGGER.info("Queue ready.")
