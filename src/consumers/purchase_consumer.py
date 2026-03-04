@@ -1,8 +1,8 @@
 import functools
 import logging
-import time
 import pika
-from pika.exchange_type import ExchangeType
+
+from src.models.redis_repository import RedisRepository
 
 LOGGER = logging.getLogger(__name__)
 
@@ -23,6 +23,7 @@ class PurchaseConsumer:
         self._exchange_type = exchange_type
         self._consuming = False
         self._prefetch_count = 1
+        self._redis_repo = RedisRepository()
 
     def connect(self):
         LOGGER.info('Connecting to %s', self._url)
@@ -126,6 +127,10 @@ class PurchaseConsumer:
         LOGGER.info('Received message # %s from %s: %s',
                     basic_deliver.delivery_tag, properties.app_id, body)
         self.acknowledge_message(basic_deliver.delivery_tag)
+        success = self._redis_repo.add_notification(body)
+
+
+
 
     def acknowledge_message(self, delivery_tag):
         LOGGER.info('Acknowledging message %s', delivery_tag)
