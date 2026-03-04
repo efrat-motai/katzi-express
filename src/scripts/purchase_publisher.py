@@ -1,3 +1,5 @@
+import functools
+
 import pika
 import json
 import logging
@@ -11,7 +13,7 @@ LOGGER = logging.getLogger(__name__)
 class PurchasePublisher:
     RECONNECT_DELAY = 5
 
-    def __init__(self, amqp_url, queue_name, routing_key, exchange=''):
+    def __init__(self, amqp_url, queue_name, routing_key, exchange='', exchange_type='direct',):
         self._connection = None
         self._channel = None
         self._deliveries = {}
@@ -22,6 +24,7 @@ class PurchasePublisher:
         self.queue = queue_name
         self.routing_key = routing_key
         self.exchange = exchange
+        self.exchange_type = exchange_type
         self._stopping = False
 
     def run(self):
@@ -77,12 +80,30 @@ class PurchasePublisher:
         LOGGER.info(f"Channel opened")
         self._channel = channel
         self._channel.add_on_close_callback(self.on_channel_closed)
-        self._channel.queue_declare(
-            queue=self.queue,
-            durable=True,
-            callback=self.on_queue_declared
-        )
+        self.setup_exchange(self.exchange)
+        # self._channel.queue_declare(
+        #     queue=self.queue,
+        #     durable=True,
+        #     callback=self.on_queue_declared
+        # )
 
+    def setup_exchange(self, exchange_name):
+        LOGGER.info('Declaring exchange: %s', exchange_name)
+        cb = functools.partial(self.on_exchange_declareok,
+                               userdata=exchange_name)
+        self._channel.exchange_declare(
+            exchange=exchange_name,
+            exchange_type=self.exchange_type,
+            callback=cb)
+
+    def on_exchange_declareok(self, _unused_frame, userdata):
+        LOGGER.info('Exchange declared: %s', userdata)
+        self.setup_queue(self.queue)
+
+    def setup_queue(self, queue_name):
+        LOGGER.info('Declaring queue %s', queue_name)
+        self._channel.queue_declare(queue=queue_name,
+                                    callback=self.on_queue_declareok)
     def on_channel_closed(self, channel, reason):
         LOGGER.warning('Channel %i was closed: %s', channel, reason)
         self._channel = None
