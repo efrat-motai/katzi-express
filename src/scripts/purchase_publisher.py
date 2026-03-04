@@ -13,7 +13,7 @@ LOGGER = logging.getLogger(__name__)
 class PurchasePublisher:
     RECONNECT_DELAY = 5
 
-    def __init__(self, amqp_url, queue_name, routing_key, exchange='', exchange_type='direct',):
+    def __init__(self, amqp_url, queue_name, routing_key, exchange='', exchange_type='direct', ):
         self._connection = None
         self._channel = None
         self._deliveries = {}
@@ -72,7 +72,7 @@ class PurchasePublisher:
         if self._stopping:
             self._connection.ioloop.stop()
         else:
-            LOGGER.warning('Connection closed, reopening in %i seconds: %s',self.RECONNECT_DELAY,
+            LOGGER.warning('Connection closed, reopening in %i seconds: %s', self.RECONNECT_DELAY,
                            reason)
             self._connection.ioloop.call_later(5, self._connection.ioloop.stop)
 
@@ -81,37 +81,42 @@ class PurchasePublisher:
         self._channel = channel
         self._channel.add_on_close_callback(self.on_channel_closed)
         self.setup_exchange(self.exchange)
-        # self._channel.queue_declare(
-        #     queue=self.queue,
-        #     durable=True,
-        #     callback=self.on_queue_declared
-        # )
 
     def setup_exchange(self, exchange_name):
         LOGGER.info('Declaring exchange: %s', exchange_name)
-        cb = functools.partial(self.on_exchange_declareok,
+        cb = functools.partial(self.on_exchange_declare_ok,
                                userdata=exchange_name)
         self._channel.exchange_declare(
             exchange=exchange_name,
             exchange_type=self.exchange_type,
             callback=cb)
 
-    def on_exchange_declareok(self, _unused_frame, userdata):
+    def on_exchange_declare_ok(self, _unused_frame, userdata):
         LOGGER.info('Exchange declared: %s', userdata)
         self.setup_queue(self.queue)
 
     def setup_queue(self, queue_name):
         LOGGER.info('Declaring queue %s', queue_name)
         self._channel.queue_declare(queue=queue_name,
-                                    callback=self.on_queue_declareok)
+                                    durable=True,
+                                    callback=self.on_queue_declare_ok)
+
+    def on_queue_declare_ok(self, _unused_frame):
+        LOGGER.info('Binding %s to %s with %s', self.exchange, self.queue,
+                    self.routing_key)
+        self._channel.queue_bind(self.queue,
+                                 self.exchange,
+                                 routing_key=self.routing_key,
+                                 callback=self.on_bind_ok)
+
     def on_channel_closed(self, channel, reason):
         LOGGER.warning('Channel %i was closed: %s', channel, reason)
         self._channel = None
         if not self._stopping:
             self._connection.close()
 
-    def on_queue_declared(self, _unused_frame):
-        LOGGER.info("Queue ready. Enabling publisher confirms.")
+    def on_bind_ok(self, _unused_frame):
+        LOGGER.info("Queue bound. Enabling publisher confirms.")
         self._channel.confirm_delivery(ack_nack_callback=self.on_delivery_confirmation)
         if self._deliveries:
             self.resend_pending_messages()
