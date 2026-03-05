@@ -1,7 +1,9 @@
 import functools
+import json
 import logging
 import pika
 
+from src.models.purchase_notification import PurchaseNotification
 from src.models.redis_repository import RedisRepository
 
 LOGGER = logging.getLogger(__name__)
@@ -9,7 +11,7 @@ LOGGER = logging.getLogger(__name__)
 
 class PurchaseConsumer:
 
-    def __init__(self, amqp_url, queue_name, routing_key=None, exchange='', exchange_type='direct'):
+    def __init__(self, amqp_url, queue_name, routing_key=None, exchange='', exchange_type='direct', redis_repository =None):
         self.should_reconnect = False
         self.was_consuming = False
         self._connection = None
@@ -23,7 +25,7 @@ class PurchaseConsumer:
         self._exchange_type = exchange_type
         self._consuming = False
         self._prefetch_count = 1
-        self._redis_repo = RedisRepository()
+        self._redis_repo = redis_repository
 
     def connect(self):
         LOGGER.info('Connecting to %s', self._url)
@@ -126,11 +128,10 @@ class PurchaseConsumer:
     def on_message(self, _unused_channel, basic_deliver, properties, body):
         LOGGER.info('Received message # %s from %s: %s',
                     basic_deliver.delivery_tag, properties.app_id, body)
-        self.acknowledge_message(basic_deliver.delivery_tag)
-        success = self._redis_repo.add_notification(body)
-
-
-
+        purchase_notification:dict = json.loads(body)
+        success = self._redis_repo.add_notification(purchase_notification)
+        if success:
+            self.acknowledge_message(basic_deliver.delivery_tag)
 
     def acknowledge_message(self, delivery_tag):
         LOGGER.info('Acknowledging message %s', delivery_tag)
