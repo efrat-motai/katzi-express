@@ -158,6 +158,7 @@ class PurchasePublisher:
         self._channel.basic_publish(self.exchange, self.routing_key,
                                     body=payload,
                                     properties=pika.BasicProperties(
+                                        app_id="efrat-purchase-app",
                                         content_type="application/json",
                                         delivery_mode=pika.DeliveryMode.Persistent
                                     ))
