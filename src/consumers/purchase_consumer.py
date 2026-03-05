@@ -3,15 +3,12 @@ import json
 import logging
 import pika
 
-from src.models.purchase_notification import PurchaseNotification
-from src.models.redis_repository import RedisRepository
-
 LOGGER = logging.getLogger(__name__)
 
 
 class PurchaseConsumer:
 
-    def __init__(self, amqp_url, queue_name, routing_key=None, exchange='', exchange_type='direct', redis_repository =None):
+    def __init__(self, amqp_url, queue_name, routing_key=None, exchange='', exchange_type='direct', redis_factory =None):
         self.should_reconnect = False
         self.was_consuming = False
         self._connection = None
@@ -25,7 +22,7 @@ class PurchaseConsumer:
         self._exchange_type = exchange_type
         self._consuming = False
         self._prefetch_count = 1
-        self._redis_repo = redis_repository
+        self._redis_repo = redis_factory()
 
     def connect(self):
         LOGGER.info('Connecting to %s', self._url)
@@ -53,6 +50,8 @@ class PurchaseConsumer:
 
     def on_connection_closed(self, _unused_connection, reason):
         self._channel = None
+        if self._redis_repo:
+            self._redis_repo.close_connection()
         if self._closing:
             self._connection.ioloop.stop()
         else:
