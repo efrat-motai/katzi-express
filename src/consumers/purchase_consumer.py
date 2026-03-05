@@ -8,7 +8,7 @@ LOGGER = logging.getLogger(__name__)
 
 class PurchaseConsumer:
 
-    def __init__(self, amqp_url, queue_name, routing_key=None, exchange='', exchange_type='direct', redis_factory =None):
+    def __init__(self, amqp_url, queue_name, routing_key=None, exchange='', exchange_type='direct', redis_factory =None, kafka_factory=None):
         self.should_reconnect = False
         self.was_consuming = False
         self._connection = None
@@ -23,6 +23,7 @@ class PurchaseConsumer:
         self._consuming = False
         self._prefetch_count = 1
         self._redis_repo = redis_factory()
+        self._kafka_repo = kafka_factory()
 
     def connect(self):
         LOGGER.info('Connecting to %s', self._url)
@@ -131,10 +132,17 @@ class PurchaseConsumer:
         success = self._redis_repo.add_notification(purchase_notification)
         if success:
             self.acknowledge_message(basic_deliver.delivery_tag)
+            self._kafka_repo.publish_notification('purchase_topic', purchase_notification['order_id'],body)
+        else:
+            self.reject_message(basic_deliver.delivery_tag, )
 
     def acknowledge_message(self, delivery_tag):
         LOGGER.info('Acknowledging message %s', delivery_tag)
         self._channel.basic_ack(delivery_tag)
+
+    def reject_message(self, delivery_tag, requeue=True):
+        LOGGER.warning('Rejecting message %s (requeue=%s)', delivery_tag, requeue)
+        self._channel.basic_nack(delivery_tag=delivery_tag, requeue=requeue)
 
     def stop_consuming(self):
         if self._channel:
