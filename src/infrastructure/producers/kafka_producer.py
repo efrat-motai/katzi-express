@@ -3,12 +3,11 @@ from confluent_kafka import Producer
 
 LOGGER = logging.getLogger(__name__)
 
-class PurchaseKafkaProducer:
+class KafkaProducer:
 
     def __init__(self, kafka_config):
         self.producer = Producer(**kafka_config)
-
-    def publish_notification(self, topic, key, value):
+    def publish_notification(self, topic, key, value) -> bool:
         try:
             self.producer.produce(
                 topic,
@@ -18,6 +17,7 @@ class PurchaseKafkaProducer:
             )
             self.producer.poll(0)
             self.producer.flush(1)
+            LOGGER.info(f"Successfully produce to Kafka")
             return True
         except Exception as e:
             LOGGER.error(f"Failed to produce to Kafka: {e}")
@@ -30,3 +30,6 @@ class PurchaseKafkaProducer:
             LOGGER.info(f'Message delivered to {msg.topic()} [{msg.partition()}]')
 
 
+    def close_connection(self):
+        self.producer.flush()
+        LOGGER.info(f"Successfully closed Kafka connection")
