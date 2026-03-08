@@ -3,8 +3,7 @@ import time
 
 LOGGER = logging.getLogger(__name__)
 
-
-class ReconnectingConsumer:
+class ConsumerReconnector:
 
     def __init__(self, consumer_class, **consumer_kwargs):
         self._reconnect_delay = 0
