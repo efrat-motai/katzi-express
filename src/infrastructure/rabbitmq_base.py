@@ -110,6 +110,8 @@ class RabbitmqBase(ABC):
             self._channel.close()
 
     def close_connection(self):
-        if self._connection is not None and self._connection.is_open:
+        if self._connection.is_closing or self._connection.is_closed:
+            LOGGER.info('Connection is closing or already closed')
+        else:
             LOGGER.info('Closing connection')
             self._connection.close()
