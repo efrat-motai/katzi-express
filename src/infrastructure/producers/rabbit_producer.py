@@ -3,12 +3,12 @@ import json
 import logging
 import random
 from dataclasses import asdict
-from src.rabbitmq_base import RabbitmqBase
+from src.infrastructure.rabbitmq_base import RabbitmqBase
 
 LOGGER = logging.getLogger(__name__)
 
 
-class PurchaseRabbitProducer(RabbitmqBase):
+class RabbitProducer(RabbitmqBase):
 
     def __init__(self, amqp_url, queue_name, routing_key, exchange, exchange_type, generator_func):
         super().__init__(amqp_url, queue_name, routing_key, exchange, exchange_type)

@@ -21,7 +21,7 @@ class RedisRepository:
         try:
             payload = json.dumps(notification)
             success= self.r.setex(f"order:{notification['order_id']}", 180, payload)
-            LOGGER.info(f"Successfully added notification: {notification['order_id']} to redis")
+            LOGGER.info(f"Successfully added to redis")
             return success
         except redis.RedisError as e:
             LOGGER.error(f"Redis error: {e}")
