@@ -3,7 +3,7 @@ from confluent_kafka import Producer
 
 LOGGER = logging.getLogger(__name__)
 
-class KafkaRepository:
+class PurchaseKafkaProducer:
 
     def __init__(self, kafka_config):
         self.producer = Producer(**kafka_config)

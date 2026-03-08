@@ -7,6 +7,7 @@ LOGGER = logging.getLogger(__name__)
 class ReconnectingConsumer:
 
     def __init__(self, consumer_class, **consumer_kwargs):
+        self._reconnect_delay = 0
         self._consumer_class = consumer_class
         self._consumer_kwargs = consumer_kwargs
         self._consumer = self._consumer_class(**self._consumer_kwargs)
