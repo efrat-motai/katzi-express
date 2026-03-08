@@ -1,21 +1,20 @@
 import functools
 import json
 import logging
-from src.rabbitmq_base import RabbitmqBase
+from src.infrastructure.rabbitmq_base import RabbitmqBase
 
 LOGGER = logging.getLogger(__name__)
 
 class PurchaseConsumer(RabbitmqBase):
 
-    def __init__(self, amqp_url, queue_name, routing_key, exchange, exchange_type, redis_factory =None, kafka_factory=None):
+    def __init__(self, amqp_url, queue_name, routing_key, exchange, exchange_type, data_service):
         super().__init__(amqp_url, queue_name, routing_key, exchange, exchange_type)
         self.should_reconnect = False
         self.was_consuming = False
         self._consumer_tag = None
         self._consuming = False
         self._prefetch_count = 1
-        self._redis_repo = redis_factory()
-        self._kafka_repo = kafka_factory()
+        self.service = data_service
 
     def on_connection_open_error(self, _unused_connection, err):
         LOGGER.error('Connection open failed: %s', err)
@@ -23,8 +22,8 @@ class PurchaseConsumer(RabbitmqBase):
 
     def on_connection_closed(self, _unused_connection, reason):
         self._channel = None
-        if self._redis_repo:
-            self._redis_repo.close_connection()
+        self._consuming = False
+        self.service.close_connections()
         if self._stopping:
             self._connection.ioloop.stop()
         else:
@@ -62,11 +61,10 @@ class PurchaseConsumer(RabbitmqBase):
     def on_message(self, _unused_channel, basic_deliver, properties, body):
         LOGGER.info('Received message # %s from %s: %s',
                     basic_deliver.delivery_tag, properties.app_id, body)
-        purchase_notification:dict = json.loads(body)
-        success = self._redis_repo.add_notification(purchase_notification)
+        message:dict = json.loads(body)
+        success = self.service.process(message,body)
         if success:
             self.acknowledge_message(basic_deliver.delivery_tag)
-            self._kafka_repo.publish_notification('purchase_topic', purchase_notification['order_id'],body)
         else:
             self.reject_message(basic_deliver.delivery_tag, )
 
