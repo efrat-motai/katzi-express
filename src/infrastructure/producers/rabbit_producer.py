@@ -87,7 +87,7 @@ class RabbitProducer(RabbitmqBase):
                                     properties=pika.BasicProperties(
                                         app_id="efrat-purchase-app",
                                         content_type="application/json",
-                                        delivery_mode=pika.DeliveryMode.Persistent
+                                        delivery_mode=2
                                     ))
 
         self._message_number += 1
@@ -102,7 +102,7 @@ class RabbitProducer(RabbitmqBase):
                                         body=self._deliveries[tag],
                                         properties=pika.BasicProperties(
                                             content_type="application/json",
-                                            delivery_mode=pika.DeliveryMode.Persistent
+                                            delivery_mode=2
                                         ))
         self._deliveries.clear()
         self._message_number = 0

@@ -26,6 +26,7 @@ class PurchaseConsumer(RabbitmqBase):
         self.service.close_connections()
         if self._stopping:
             self._connection.ioloop.stop()
+            LOGGER.warning("Connection closed")
         else:
             LOGGER.warning('Connection closed, reconnect necessary: %s', reason)
             self.reconnect()
