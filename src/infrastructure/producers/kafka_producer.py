@@ -3,11 +3,15 @@ from confluent_kafka import Producer
 
 LOGGER = logging.getLogger(__name__)
 
+
 class KafkaProducer:
 
     def __init__(self, kafka_config):
         self.producer = Producer(**kafka_config)
+        self.delivery_status = False
+
     def publish_notification(self, topic, key, value) -> bool:
+        self.delivery_status = True
         try:
             self.producer.produce(
                 topic,
@@ -15,10 +19,8 @@ class KafkaProducer:
                 value=value,
                 on_delivery=self.delivery_callback
             )
-            self.producer.poll(0)
-            self.producer.flush(1)
-            LOGGER.info(f"Successfully produce to Kafka")
-            return True
+            self.producer.flush()
+            return self.delivery_status
         except Exception as e:
             LOGGER.error(f"Failed to produce to Kafka: {e}")
             return False
@@ -26,9 +28,10 @@ class KafkaProducer:
     def delivery_callback(self, err, msg):
         if err is not None:
             LOGGER.error(f'Message delivery failed: {err}')
+            self.delivery_status = False
         else:
             LOGGER.info(f'Message delivered to {msg.topic()} [{msg.partition()}]')
-
+            self.delivery_status = True
 
     def close_connection(self):
         self.producer.flush()
