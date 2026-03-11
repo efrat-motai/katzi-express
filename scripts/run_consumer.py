@@ -17,7 +17,8 @@ def main():
 
     redis_host = config["redis"]["host"]
     redis_port = config["redis"]["port"]
-    redis= RedisRepository(redis_host, redis_port)
+    ttl = config["redis"]["ttl"]
+    redis= RedisRepository(redis_host, redis_port, ttl)
 
     kafka_config = config["kafka"]
     kafka = KafkaProducer(kafka_config)

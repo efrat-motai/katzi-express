@@ -28,7 +28,7 @@ class ConsumerReconnector:
             time.sleep(reconnect_delay)
             self._consumer = self._consumer_class(**self._consumer_kwargs)
 
-    def _get_reconnect_delay(self):
+    def _get_reconnect_delay(self)->int:
         if self._consumer.was_consuming:
             self._reconnect_delay = 0
         else:

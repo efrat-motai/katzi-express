@@ -5,7 +5,7 @@ from src.data.mock_data import products, customers
 import random
 
 
-def generate_purchase_notification():
+def generate_purchase_notification()->PurchaseNotification:
     weights = [p.get("popularity", 1) for p in products]
     product = random.choices(products, weights=weights, k=1)[0]
     customer_index = random.randint(0, len(customers) - 1)
