@@ -11,8 +11,10 @@ redis:
   port: 6379
 
 kafka:
-  'bootstrap.servers': 'localhost:9092'
-  'client.id': 'efrat_producer_app'
-  'acks': 'all'
-  'retries': 3
+  bootstrap.servers: 'localhost:9092'
+  client.id: 'efrat_producer_app'
+  acks: 'all'
+  retries: 1
+  delivery.timeout.ms: 5000
+  request.timeout.ms: 4000
   security.protocol: "PLAINTEXT"
