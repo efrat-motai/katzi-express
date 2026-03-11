@@ -69,6 +69,7 @@ class RabbitmqBase(ABC):
                                userdata=exchange_name)
         self._channel.exchange_declare(
             exchange=exchange_name,
+            durable=True,
             exchange_type=self.exchange_type,
             callback=cb)
 
@@ -93,8 +94,7 @@ class RabbitmqBase(ABC):
     def on_channel_closed(self, channel, reason):
         LOGGER.warning('Channel %i was closed: %s', channel, reason)
         self._channel = None
-        if not self._stopping:
-            self.close_connection()
+        self.close_connection()
 
     def on_bind_ok(self, _unused_frame):
         LOGGER.info("Queue bound.")
@@ -113,5 +113,4 @@ class RabbitmqBase(ABC):
         if self._connection.is_closing or self._connection.is_closed:
             LOGGER.info('Connection is closing or already closed')
         else:
-            LOGGER.info('Closing connection')
             self._connection.close()
