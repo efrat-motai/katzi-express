@@ -26,5 +26,5 @@ kafka_consumer:
   auto.offset.reset: 'earliest'
   enable.auto.commit: false
   security.protocol: "PLAINTEXT"
-  
+
 
