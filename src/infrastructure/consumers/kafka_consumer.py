@@ -1,19 +1,21 @@
 import logging
-from confluent_kafka import Consumer, KafkaException
+import yaml
+from retry import retry
+from confluent_kafka import KafkaException, Consumer
 
 LOGGER = logging.getLogger(__name__)
 
 
 class KafkaConsumer:
 
-    def __init__(self, kafka_config, topics):
+    def __init__(self):
         self.consumer = None
-        self.connect(kafka_config,topics)
 
-    def connect(self, kafka_config, topics):
-        self.consumer = Consumer(**kafka_config)
+    @retry(tries=5, delay=2, backoff=2, exceptions=KafkaException)
+    def connect(self, consumer_config, topics):
+        self.consumer = Consumer(**consumer_config)
         self.consumer.subscribe(topics)
-
+        LOGGER.info('Consumer connected successfully \n')
 
     def consume_notification(self):
         try:
@@ -36,3 +38,13 @@ class KafkaConsumer:
         finally:
             self.consumer.close()
             LOGGER.info('Consumer closed\n')
+
+if __name__ == '__main__':
+    config = yaml.safe_load(open("../../../config/config.yml"))
+    logging.basicConfig(level=config["logging"]["level"], format=config["logging"]["format"])
+    logging.getLogger('pika').setLevel(logging.WARNING)
+
+    kafka_config = config["kafka_consumer"]
+    consumer = KafkaConsumer()
+    consumer.connect(kafka_config, ['purchase_topic'])
+    consumer.consume_notification()
