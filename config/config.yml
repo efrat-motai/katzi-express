@@ -11,7 +11,7 @@ redis:
   port: 6379
   ttl: 180
 
-kafka:
+kafka_producer:
   bootstrap.servers: 'localhost:9092'
   client.id: 'efrat_producer_app'
   acks: 'all'
@@ -19,3 +19,12 @@ kafka:
   delivery.timeout.ms: 5000
   request.timeout.ms: 4000
   security.protocol: "PLAINTEXT"
+
+kafka_consumer:
+  bootstrap.servers: 'localhost:9092'
+  group.id: 'hot_products_calculator_group'
+  auto.offset.reset: 'earliest'
+  enable.auto.commit: false
+  security.protocol: "PLAINTEXT"
+  
+

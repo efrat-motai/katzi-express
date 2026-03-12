@@ -20,7 +20,7 @@ def main():
     ttl = config["redis"]["ttl"]
     redis= RedisRepository(redis_host, redis_port, ttl)
 
-    kafka_config = config["kafka"]
+    kafka_config = config["kafka_producer"]
     kafka = KafkaProducer(kafka_config)
 
     consumer_params = {

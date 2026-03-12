@@ -11,7 +11,6 @@ class KafkaProducer:
         self.delivery_status = False
 
     def publish_notification(self, topic, key, value) -> bool:
-        self.delivery_status = True
         try:
             self.producer.produce(
                 topic,
