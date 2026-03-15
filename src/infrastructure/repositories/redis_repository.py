@@ -33,7 +33,19 @@ class RedisRepository:
             LOGGER.error(f"Redis error: {e}")
             return False
 
-    
+    def get_hot_products(self, count=3) -> list:
+        try:
+            window_timestamp = int(time.time() // 60) * 60
+            key = f"hot_products:{window_timestamp}"
+            hot_products = self.r.zrevrange(key, 0, count - 1, withscores=True)
+            if not hot_products:
+                key = f"hot_products:{window_timestamp - 60}"
+                hot_products = self.r.zrevrange(key, 0, count - 1, withscores=True)
+            return hot_products
+        except redis.RedisError as e:
+            LOGGER.error(f"Failed to fetch hot products: {e}")
+            return []
+
     def close_connection(self) -> None:
         if self.r:
             self.r.close()
