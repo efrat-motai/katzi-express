@@ -1,6 +1,5 @@
-import abc
 import functools
-from abc import ABC
+from abc import ABC, abstractmethod
 import pika
 import logging
 
@@ -22,11 +21,11 @@ class RabbitmqBase(ABC):
         self.exchange_type = exchange_type
         self._stopping = False
 
-    @abc.abstractmethod
+    @abstractmethod
     def run(self):
         pass
 
-    @abc.abstractmethod
+    @abstractmethod
     def stop(self):
         pass
 
@@ -100,7 +99,7 @@ class RabbitmqBase(ABC):
         LOGGER.info("Queue bound.")
         self.on_setup_ready()
 
-    @abc.abstractmethod
+    @abstractmethod
     def on_setup_ready(self):
         pass
 
