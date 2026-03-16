@@ -15,11 +15,6 @@ def main():
     amqp_url = config["rabbitmq"]["url"]
     queue_name = config["rabbitmq"]["queue"]
 
-    redis_host = config["redis"]["host"]
-    redis_port = config["redis"]["port"]
-    ttl = config["redis"]["ttl"]
-    redis= RedisRepository(redis_host, redis_port, ttl)
-
     kafka_config = config["kafka_producer"]
     kafka = KafkaProducer(kafka_config)
 
@@ -29,7 +24,7 @@ def main():
         'exchange': 'purchases_exchange',
         'routing_key': queue_name,
         'exchange_type': ExchangeType.direct,
-        'data_service': PurchaseService(redis, kafka)
+        'data_service': PurchaseService(kafka)
 
     }
     consumer = ConsumerReconnector(PurchaseConsumer, **consumer_params)
