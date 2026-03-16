@@ -20,10 +20,8 @@ class RedisRepository:
         except redis.ConnectionError as e:
             LOGGER.error(f"Redis connection error: {e}")
 
-    def increment_product_count(self, product_id: int) -> bool:
+    def increment_product_count(self,key:str,product_id: int) -> bool:
         try:
-            window_timestamp = int(time.time() // 60) * 60
-            key = f"hot_products:{window_timestamp}"
             success = self.r.zincrby(key, 1, product_id)
             self.r.expire(key, self.ttl)
             LOGGER.info(f"Incremented count for product {product_id}")
@@ -33,14 +31,9 @@ class RedisRepository:
             LOGGER.error(f"Redis error: {e}")
             return False
 
-    def get_hot_products(self, count=3) -> list:
+    def get_hot_products(self,key, count=3) -> list:
         try:
-            window_timestamp = int(time.time() // 60) * 60
-            key = f"hot_products:{window_timestamp}"
             hot_products = self.r.zrevrange(key, 0, count - 1, withscores=True)
-            if not hot_products:
-                key = f"hot_products:{window_timestamp - 60}"
-                hot_products = self.r.zrevrange(key, 0, count - 1, withscores=True)
             return hot_products
         except redis.RedisError as e:
             LOGGER.error(f"Failed to fetch hot products: {e}")
