@@ -29,7 +29,12 @@ class KafkaConsumer:
                 else:
                     data = msg.value().decode('utf-8')
                     LOGGER.info(f"Received message: {data}")
-                    self.service.process(data)
+                    success = self.service.process(data)
+                    if success:
+                        self.consumer.commit(asynchronous=False)
+                        LOGGER.info(f"Message processed and committed: {data}")
+                    else:
+                        LOGGER.error(f"Failed to process message. Skipping commit for: {data}")
 
         except KeyboardInterrupt:
             LOGGER.warning('Aborted by user')
