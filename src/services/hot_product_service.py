@@ -35,7 +35,6 @@ class HotProductService:
                 result = product_info.copy()
                 result["current_score"] = int(score)
                 full_details.append(result)
-            #full_details.append(products_mock.get(product_id))
 
         return full_details
 

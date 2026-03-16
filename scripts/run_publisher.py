@@ -1,14 +1,12 @@
-import logging
-import yaml
 from pika.exchange_type import ExchangeType
 from src.generators.purchase_notification_generator import generate_purchase_notification
 from src.infrastructure.producers.rabbit_producer import RabbitProducer
+from src.utils.config_loader import load_config
 
 
 def main():
-    config = yaml.safe_load(open("../config/config.yml"))
-    logging.basicConfig(level=config["logging"]["level"], format=config["logging"]["format"])
-    logging.getLogger('pika').setLevel(logging.WARNING)
+    config = load_config()
+
     amqp_url = config["rabbitmq"]["url"]
     queue_name = config["rabbitmq"]["queue"]
     publisher = RabbitProducer(

@@ -1,6 +1,4 @@
 import logging
-import time
-
 import redis
 
 LOGGER = logging.getLogger(__name__)

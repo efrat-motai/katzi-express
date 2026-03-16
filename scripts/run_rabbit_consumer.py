@@ -1,17 +1,14 @@
-import logging
-import yaml
 from pika.exchange_type import ExchangeType
 from src.services.purchase_service import PurchaseService
+from src.utils.config_loader import load_config
 from src.utils.consumer_reconnector import ConsumerReconnector
 from src.infrastructure.consumers.purchase_consumer import PurchaseConsumer
-from src.infrastructure.repositories.redis_repository import RedisRepository
 from src.infrastructure.producers.kafka_producer import KafkaProducer
 
 
 def main():
-    config = yaml.safe_load(open("../config/config.yml"))
-    logging.basicConfig(level=config["logging"]["level"], format=config["logging"]["format"])
-    logging.getLogger('pika').setLevel(logging.WARNING)
+    config = load_config()
+
     amqp_url = config["rabbitmq"]["url"]
     queue_name = config["rabbitmq"]["queue"]
 

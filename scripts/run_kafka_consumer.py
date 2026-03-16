@@ -1,21 +1,13 @@
-import logging
-
-import yaml
-
 from src.infrastructure.consumers.kafka_consumer import KafkaConsumer
 from src.infrastructure.repositories.redis_repository import RedisRepository
 from src.services.hot_product_service import HotProductService
+from src.utils.config_loader import load_config
 
 
 def main():
-    config = yaml.safe_load(open("../config/config.yml"))
-    logging.basicConfig(level=config["logging"]["level"], format=config["logging"]["format"])
-    logging.getLogger('pika').setLevel(logging.WARNING)
-
-    redis_host = config["redis"]["host"]
-    redis_port = config["redis"]["port"]
-    ttl = config["redis"]["ttl"]
-    redis = RedisRepository(redis_host, redis_port, ttl)
+    config = load_config()
+    redis_config = config["redis"]
+    redis = RedisRepository(host=redis_config["host"], port=redis_config["port"], ttl=redis_config["ttl"])
 
     hot_product_service = HotProductService(redis)
 
@@ -23,6 +15,7 @@ def main():
     consumer = KafkaConsumer(hot_product_service)
     consumer.connect(kafka_config, ['purchase_topic'])
     consumer.consume_notification()
+
 
 if __name__ == '__main__':
     main()
