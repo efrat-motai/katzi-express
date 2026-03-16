@@ -1,5 +1,5 @@
-from src.infrastructure.consumers.kafka_consumer import KafkaConsumer
-from src.infrastructure.repositories.redis_repository import RedisRepository
+from src.infrastructure.messaging.consumers.kafka_consumer import KafkaConsumer
+from src.infrastructure.repositories.redis_purchase_repository import RedisRepository
 from src.services.hot_product_service import HotProductService
 from src.utils.config_loader import load_config
 

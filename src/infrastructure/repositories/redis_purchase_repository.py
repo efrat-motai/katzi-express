@@ -1,10 +1,12 @@
 import logging
 import redis
 
+from src.infrastructure.repositories.base_purchase_repository import BasePurchaseRepository
+
 LOGGER = logging.getLogger(__name__)
 
 
-class RedisRepository:
+class RedisPurchaseRepository(BasePurchaseRepository):
     def __init__(self, host="localhost", port=6379, ttl=0, db=0):
         self.r = None
         self.connect(host, port, db)

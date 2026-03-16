@@ -1,7 +1,7 @@
 from datetime import datetime
 import uuid
 from src.models.purchase_notification import PurchaseNotification
-from src.data.mock_data import products, customers
+from src.utils.data.mock_data import products, customers
 import random
 
 

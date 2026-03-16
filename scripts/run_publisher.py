@@ -1,6 +1,6 @@
 from pika.exchange_type import ExchangeType
-from src.generators.purchase_notification_generator import generate_purchase_notification
-from src.infrastructure.producers.rabbit_producer import RabbitProducer
+from src.utils.generators.purchase_notification_generator import generate_purchase_notification
+from src.infrastructure.messaging.producers.rabbit_producer import RabbitProducer
 from src.utils.config_loader import load_config
 
 

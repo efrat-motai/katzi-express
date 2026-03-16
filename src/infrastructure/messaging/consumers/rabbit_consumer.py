@@ -1,7 +1,7 @@
 import functools
 import json
 import logging
-from src.infrastructure.rabbitmq_base import RabbitmqBase
+from src.infrastructure.messaging.rabbitmq_base import RabbitmqBase
 
 LOGGER = logging.getLogger(__name__)
 

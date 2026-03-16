@@ -1,7 +1,7 @@
 import json
 import time
 
-from src.data.mock_data import products
+from src.utils.data.mock_data import products
 
 
 class HotProductService:
