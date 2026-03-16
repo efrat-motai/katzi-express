@@ -24,7 +24,6 @@ kafka_consumer:
   bootstrap.servers: 'localhost:9092'
   group.id: 'hot_products_calculator_group'
   auto.offset.reset: 'earliest'
-  enable.auto.commit: false
   security.protocol: "PLAINTEXT"
 
 
