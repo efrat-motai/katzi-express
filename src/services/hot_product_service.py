@@ -1,7 +1,10 @@
 import json
+import logging
 import time
 
 from src.utils.data.mock_data import products
+
+LOGGER = logging.getLogger(__name__)
 
 
 class HotProductService:
@@ -9,12 +12,18 @@ class HotProductService:
         self.redis = redis_repo
 
     def process(self, purchase_notification: str) -> bool:
-        purchase_notification = json.loads(purchase_notification)
-        product_id = purchase_notification['product_id']
-        window_timestamp = int(time.time() // 60) * 60
-        key = f"hot_products:{window_timestamp}"
-        success = self.redis.increment_product_count(key, product_id)
-        return success
+        try:
+            purchase_notification = json.loads(purchase_notification)
+            product_id = purchase_notification['product_id']
+            window_timestamp = int(time.time() // 60) * 60
+            key = f"hot_products:{window_timestamp}"
+            return self.redis.increment_product_count(key, product_id)
+        except json.JSONDecodeError:
+            LOGGER.error("Invalid JSON received")
+            return True
+        except Exception as e:
+            LOGGER.error(f"Error in service process: {e}")
+            return False
 
     def get_top_products(self, count) -> list:
         window_timestamp = int(time.time() // 60) * 60
