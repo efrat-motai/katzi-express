@@ -17,6 +17,9 @@ class HotProductService:
         try:
             purchase_notification = json.loads(purchase_notification)
             product_id = purchase_notification['product_id']
+            if not product_id:
+                LOGGER.warning("An object without id was received.")
+                return True
             window_timestamp = int(
                 time.time() // self.window_size_seconds) * self.window_size_seconds
             key = f"hot_products:{window_timestamp}"
