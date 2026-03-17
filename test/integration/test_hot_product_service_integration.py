@@ -14,6 +14,11 @@ def redis_client():
     client.flushdb()
     client.close()
 
+@pytest.fixture
+def integration_service(redis_client):
+    redis_repository = RedisPurchaseRepository(redis_client)
+    product_repository = MockProductRepository()
+    yield HotProductService(redis_repo=redis_repository, product_repo=product_repository)
 
 
 @pytest.fixture
