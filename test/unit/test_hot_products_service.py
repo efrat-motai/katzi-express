@@ -1,16 +1,26 @@
-from unittest.mock import MagicMock
+import json
 import pytest
+from unittest.mock import MagicMock, patch
 
+from src.infrastructure.repositories.redis_purchase_repository import RedisPurchaseRepository
 from src.services.hot_product_service import HotProductService
 
 
 @pytest.fixture
 def mock_redis_repo():
-    return MagicMock()
+    return MagicMock(spec=RedisPurchaseRepository)
 
 @pytest.fixture
 def service(mock_redis_repo):
     return HotProductService(redis_repo=mock_redis_repo)
 
-def test_process_success(service, mock_redis_repo):
-    purchase_notification = {"product_id": 1, "product_name": "violin", "product_category": "musical_instrumental", "price": 7000, "customer_id": 101, "quantity": 7, "order_date": "2026-03-17T10:39:07.454259", "order_id": "c3135807-21dc-11f1-abe2-e3e83e2d319b"}
+def test_process_success(service: HotProductService, mock_redis_repo: MagicMock):
+    purchase_notification = json.dumps({"product_id": 1, "quantity": 1})
+    mock_redis_repo.increment_product_count.return_value = True
+
+    with patch('src.services.hot_product_service.time.time', return_value=1773745199.3122442):
+        result = service.process(purchase_notification)
+
+    assert result == True
+    expected_key = 'hot_products:1773745140'
+    mock_redis_repo.increment_product_count.assert_called_once_with(expected_key, 1)
