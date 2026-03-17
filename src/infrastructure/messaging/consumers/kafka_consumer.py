@@ -11,7 +11,7 @@ class KafkaConsumer:
         self.consumer = None
         self.service = data_service
 
-    @retry(tries=5, delay=2, backoff=2, exceptions=KafkaException)
+    @retry(tries=10, delay=2, backoff=2, exceptions=KafkaException)
     def connect(self, consumer_config, topics):
         self.consumer = Consumer(**consumer_config)
         self.consumer.subscribe(topics)
