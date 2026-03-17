@@ -1,4 +1,4 @@
-products = [
+PRODUCTS = [
     {"product_id": 1, "product_name": "violin", "product_category": "musical_instrumental", "price": 7000,
      "popularity": 50},
     {"product_id": 2, "product_name": "guitar", "product_category": "musical_instrumental", "price": 3500,
@@ -17,5 +17,5 @@ products = [
      "popularity": 0.5},
 ]
 
-customers = [{"customer_id": 101}, {"customer_id": 102}, {"customer_id": 103}, {"customer_id": 104},
+CUSTOMERS = [{"customer_id": 101}, {"customer_id": 102}, {"customer_id": 103}, {"customer_id": 104},
              {"customer_id": 105}]
