@@ -1,6 +1,6 @@
 import uvicorn
 from fastapi import FastAPI
-from src.infrastructure.repositories.redis_purchase_repository import RedisPurchaseRepository
+from src.infrastructure.repositories.purchase.redis_purchase_repository import RedisPurchaseRepository
 from src.services.hot_product_service import HotProductService
 from src.utils.config_loader import load_config
 

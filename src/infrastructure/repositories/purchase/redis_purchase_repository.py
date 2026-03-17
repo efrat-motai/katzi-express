@@ -1,7 +1,7 @@
 import logging
 import redis
 
-from src.infrastructure.repositories.base_purchase_repository import BasePurchaseRepository
+from src.infrastructure.repositories.purchase.base_purchase_repository import BasePurchaseRepository
 
 LOGGER = logging.getLogger(__name__)
 

@@ -2,7 +2,7 @@ import json
 import pytest
 from unittest.mock import MagicMock, patch
 
-from src.infrastructure.repositories.redis_purchase_repository import RedisPurchaseRepository
+from src.infrastructure.repositories.purchase.redis_purchase_repository import RedisPurchaseRepository
 from src.services.hot_product_service import HotProductService
 
 
