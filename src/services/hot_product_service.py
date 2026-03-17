@@ -39,13 +39,10 @@ class HotProductService:
             key = f"hot_products:{window_timestamp - self.window_size_seconds // 60}"
             row_result = self.redis_repository.get_hot_products(key=key, count=3)
 
-        products = self.product_repository.get_all()
-        products_by_id = {str(p["product_id"]): p for p in products}
         full_details = []
 
         for product_id, score in row_result:
-            product_info = products_by_id.get(product_id)
-
+            product_info = self.product_repository.get_by_id(product_id)
             if product_info:
                 result = product_info.copy()
                 result["current_score"] = int(score)
