@@ -1,4 +1,5 @@
 from src.infrastructure.messaging.consumers.kafka_consumer import KafkaConsumer
+from src.infrastructure.repositories.product.mock_product_repository import MockProductRepository
 from src.infrastructure.repositories.purchase.redis_purchase_repository import RedisPurchaseRepository
 from src.services.hot_product_service import HotProductService
 from src.utils.config_loader import load_config
@@ -9,7 +10,7 @@ def main():
     redis_config = config["redis"]
     redis = RedisPurchaseRepository(host=redis_config["host"], port=redis_config["port"], ttl=redis_config["ttl"])
 
-    hot_product_service = HotProductService(redis)
+    hot_product_service = HotProductService(redis,MockProductRepository() )
 
     kafka_config = config["kafka_consumer"]
     consumer = KafkaConsumer(hot_product_service)
