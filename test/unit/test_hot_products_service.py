@@ -42,3 +42,12 @@ def test_get_top_products(service: HotProductService, mock_redis_repo: MagicMock
     assert result[0]['product_id'] == 1
     assert result[0]['current_score'] == 100
     assert mock_redis_repo.get_hot_products.call_count == 2
+
+
+def test_process_redis_failure(service, mock_redis_repo):
+    notification = json.dumps({"product_id": 1, "quantity": 1})
+    mock_redis_repo.increment_product_count.return_value = False
+    result = service.process(notification)
+    assert result is False
+    mock_redis_repo.increment_product_count.assert_called_once()
+
