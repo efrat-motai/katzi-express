@@ -2,18 +2,22 @@ import json
 import pytest
 from unittest.mock import MagicMock, patch
 
-from src.infrastructure.repositories.purchase.redis_purchase_repository import RedisPurchaseRepository
+from src.infrastructure.repositories.product.base_product_repository import BaseProductRepository
+from src.infrastructure.repositories.purchase.base_purchase_repository import BasePurchaseRepository
 from src.services.hot_product_service import HotProductService
 
 
 @pytest.fixture
 def mock_redis_repo():
-    return MagicMock(spec=RedisPurchaseRepository)
-
+    return MagicMock(spec=BasePurchaseRepository)
 
 @pytest.fixture
-def service(mock_redis_repo):
-    return HotProductService(redis_repo=mock_redis_repo)
+def mock_products_repo():
+    return MagicMock(spec=BaseProductRepository)
+
+@pytest.fixture
+def service(mock_redis_repo, mock_products_repo):
+    return HotProductService(redis_repo=mock_redis_repo, product_repo=mock_products_repo)
 
 
 def test_process_success(service: HotProductService, mock_redis_repo: MagicMock):
@@ -35,11 +39,13 @@ def test_process_invalid_json(service, mock_redis_repo):
     mock_redis_repo.increment_product_count.assert_not_called()
 
 
-def test_get_top_products(service: HotProductService, mock_redis_repo: MagicMock):
+def test_get_top_products(service: HotProductService, mock_redis_repo: MagicMock, mock_products_repo: MagicMock):
     mock_redis_repo.get_hot_products.side_effect = [[], [('1', 100.0)]]
+    mock_products_repo.get_by_id.return_value = {"product_id": 1, "name": "Test Product"}
     result = service.get_top_products(count=3)
     assert len(result) == 1
     assert result[0]['product_id'] == 1
+    assert result[0]['name'] == 'Test Product'
     assert result[0]['current_score'] == 100
     assert mock_redis_repo.get_hot_products.call_count == 2
 
