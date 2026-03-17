@@ -10,9 +10,11 @@ from src.services.hot_product_service import HotProductService
 def mock_redis_repo():
     return MagicMock(spec=RedisPurchaseRepository)
 
+
 @pytest.fixture
 def service(mock_redis_repo):
     return HotProductService(redis_repo=mock_redis_repo)
+
 
 def test_process_success(service: HotProductService, mock_redis_repo: MagicMock):
     purchase_notification = json.dumps({"product_id": 1, "quantity": 1})
@@ -24,3 +26,19 @@ def test_process_success(service: HotProductService, mock_redis_repo: MagicMock)
     assert result == True
     expected_key = 'hot_products:1773745140'
     mock_redis_repo.increment_product_count.assert_called_once_with(expected_key, 1)
+
+
+def test_process_invalid_json(service, mock_redis_repo):
+    bad_notification = "this is not a json"
+    result = service.process(bad_notification)
+    assert result is True
+    mock_redis_repo.increment_product_count.assert_not_called()
+
+
+def test_get_top_products(service: HotProductService, mock_redis_repo: MagicMock):
+    mock_redis_repo.get_hot_products.side_effect = [[], [('1', 100.0)]]
+    result = service.get_top_products(count=3)
+    assert len(result) == 1
+    assert result[0]['product_id'] == 1
+    assert result[0]['current_score'] == 100
+    assert mock_redis_repo.get_hot_products.call_count == 2
