@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 class BasePurchaseRepository(ABC):
 
     @abstractmethod
-    def increment_product_count(self, key: str, product_id: int) -> bool:
+    def increment_product_count(self, key: str, product_id: int, amount:int) -> bool:
         pass
 
     @abstractmethod

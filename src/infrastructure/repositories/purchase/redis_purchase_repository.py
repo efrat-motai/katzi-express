@@ -11,10 +11,9 @@ class RedisPurchaseRepository(BasePurchaseRepository):
         self.redis_client = redis_client
         self.ttl = ttl
 
-
-    def increment_product_count(self,key:str,product_id: int) -> bool:
+    def increment_product_count(self, key: str, product_id: int, amount: int) -> bool:
         try:
-            success = self.redis_client.zincrby(key, 1, product_id)
+            success = self.redis_client.zincrby(key, amount, product_id)
             self.redis_client.expire(key, self.ttl)
             LOGGER.info(f"Incremented count for product {product_id}")
             return success
@@ -23,7 +22,7 @@ class RedisPurchaseRepository(BasePurchaseRepository):
             LOGGER.error(f"Redis error: {e}")
             return False
 
-    def get_hot_products(self,key, count=3) -> list:
+    def get_hot_products(self, key, count=3) -> list:
         try:
             hot_products = self.redis_client.zrevrange(key, 0, count - 1, withscores=True)
             return hot_products

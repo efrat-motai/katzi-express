@@ -19,13 +19,14 @@ class HotProductService:
         try:
             purchase_notification = json.loads(purchase_notification)
             product_id = purchase_notification['product_id']
-            if not product_id:
-                LOGGER.warning("An object without id was received.")
+            quantity = purchase_notification['quantity']
+            if not product_id or not quantity:
+                LOGGER.warning("An object without required fields was received.")
                 return True
             window_timestamp = int(
                 time.time() // self.window_size_seconds) * self.window_size_seconds
             key = f"hot_products:{window_timestamp}"
-            return self.redis_repository.increment_product_count(key, product_id)
+            return self.redis_repository.increment_product_count(key=key, product_id=product_id, amount=quantity)
         except json.JSONDecodeError:
             LOGGER.error("Invalid JSON received")
             return True
