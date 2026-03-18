@@ -10,3 +10,7 @@ class BasePurchaseRepository(ABC):
     @abstractmethod
     def get_hot_products(self, key: str, count: int) -> list:
         pass
+
+    @abstractmethod
+    def close_connection(self) -> None:
+        pass
