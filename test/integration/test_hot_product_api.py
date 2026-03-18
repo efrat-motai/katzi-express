@@ -1,6 +1,5 @@
 import time
-from src.api.hot_products_api import app
-from src.setup import bootstrap_service
+from src.api.hot_products_api import app, get_hot_product_service
 
 
 def test_hot_products_api(api_client):
@@ -9,7 +8,7 @@ def test_hot_products_api(api_client):
 
 
 def test_get_hot_products(api_client, redis_client, integration_service):
-    app.dependency_overrides[bootstrap_service] = lambda: integration_service
+    app.dependency_overrides[get_hot_product_service] = lambda: integration_service
     current_key = f"hot_products:{int(time.time() // 60) * 60}"
     redis_client.zadd(current_key, {"1": 10, "2": 5})
     response = api_client.get("/hot_products")
