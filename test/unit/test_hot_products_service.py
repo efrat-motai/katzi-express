@@ -1,23 +1,6 @@
 import json
-import pytest
 from unittest.mock import MagicMock, patch
-
-from src.infrastructure.repositories.product.base_product_repository import BaseProductRepository
-from src.infrastructure.repositories.purchase.base_purchase_repository import BasePurchaseRepository
 from src.services.hot_product_service import HotProductService
-
-
-@pytest.fixture
-def mock_redis_repo():
-    return MagicMock(spec=BasePurchaseRepository)
-
-@pytest.fixture
-def mock_products_repo():
-    return MagicMock(spec=BaseProductRepository)
-
-@pytest.fixture
-def service(mock_redis_repo, mock_products_repo):
-    return HotProductService(redis_repo=mock_redis_repo, product_repo=mock_products_repo)
 
 
 def test_process_success(service: HotProductService, mock_redis_repo: MagicMock):
@@ -29,7 +12,7 @@ def test_process_success(service: HotProductService, mock_redis_repo: MagicMock)
 
     assert result == True
     expected_key = 'hot_products:1773745140'
-    mock_redis_repo.increment_product_count.assert_called_once_with(expected_key, 1)
+    mock_redis_repo.increment_product_count.assert_called_once_with(key=expected_key, product_id=1, amount=1)
 
 
 def test_process_invalid_json(service, mock_redis_repo):
@@ -56,4 +39,3 @@ def test_process_redis_failure(service, mock_redis_repo):
     result = service.process(notification)
     assert result is False
     mock_redis_repo.increment_product_count.assert_called_once()
-

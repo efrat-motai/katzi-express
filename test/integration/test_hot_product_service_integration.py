@@ -1,26 +1,19 @@
-import pytest
-
-from src.infrastructure.database.redis_client_creator import create_redis_client
-from src.infrastructure.repositories.product.mock_product_repository import MockProductRepository
-from src.infrastructure.repositories.purchase.redis_purchase_repository import RedisPurchaseRepository
-from src.services.hot_product_service import HotProductService
+import json
 
 
-@pytest.fixture
-def redis_client():
-    client = create_redis_client(db=1)
-    client.flushdb()
-    yield client
-    client.flushdb()
-    client.close()
+def test_process_integration(integration_service, redis_client):
+    notification = json.dumps({"product_id": 1, "quantity": 10})
+    success = integration_service.process(notification)
+    assert success
 
-@pytest.fixture
-def integration_service(redis_client):
-    redis_repository = RedisPurchaseRepository(redis_client)
-    product_repository = MockProductRepository()
-    yield HotProductService(redis_repo=redis_repository, product_repo=product_repository)
+    keys = redis_client.keys("hot_products:*")
+    assert len(keys) == 1
 
+    score = redis_client.zscore(keys[0], "1")
+    assert score == 10
 
-@pytest.fixture
-def test_process_integration(redis_repo):
-    pass
+    top_list = integration_service.get_top_products(count=1)
+
+    assert len(top_list) == 1
+    assert top_list[0]['product_id'] == 1
+    assert top_list[0]['current_score'] == 10
