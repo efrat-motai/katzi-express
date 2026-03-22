@@ -11,7 +11,7 @@ def load_config():
     config_path = os.path.normpath(config_path)
     config = yaml.safe_load(open(config_path))
     logging.basicConfig(level=config["logging"]["level"], format=config["logging"]["format"])
-    logging.getLogger('pika').setLevel(logging.WARNING)
+    logging.getLogger('pika').setLevel(logging.CRITICAL)
     logging.getLogger('kafka').setLevel(logging.WARNING)
     return config
 
