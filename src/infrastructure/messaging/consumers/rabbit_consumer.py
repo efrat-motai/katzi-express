@@ -10,13 +10,13 @@ LOGGER = logging.getLogger(__name__)
 
 class PurchaseConsumer(RabbitmqBase):
 
-    def __init__(self, amqp_url, queue_name, routing_key, exchange, exchange_type, data_service):
+    def __init__(self, amqp_url, queue_name, routing_key, exchange, exchange_type, data_service, prefetch_count = 1):
         super().__init__(amqp_url, queue_name, routing_key, exchange, exchange_type)
         self.should_reconnect = False
         self.was_consuming = False
         self._consumer_tag = None
         self._consuming = False
-        self._prefetch_count = 1
+        self._prefetch_count = prefetch_count
         self.service = data_service
 
     def on_setup_ready(self):
