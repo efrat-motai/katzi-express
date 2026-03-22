@@ -37,7 +37,7 @@ class HotProductService:
         row_result = self.redis_repository.get_hot_products(key=key, count=count)
 
         if not row_result:
-            key = f"hot_products:{window_timestamp - self.window_size_seconds // 60}"
+            key = f"hot_products:{window_timestamp - self.window_size_seconds}"
             row_result = self.redis_repository.get_hot_products(key=key, count=3)
 
         full_details = []
