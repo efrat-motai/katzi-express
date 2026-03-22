@@ -1,7 +1,6 @@
 from pika.exchange_type import ExchangeType
 from src.services.purchase_service import PurchaseService
 from src.utils.config_loader import load_config
-from src.utils.consumer_reconnector import ConsumerReconnector
 from src.infrastructure.messaging.consumers.rabbit_consumer import PurchaseConsumer
 from src.infrastructure.messaging.producers.kafka_producer import KafkaProducer
 
@@ -24,7 +23,7 @@ def main():
         'data_service': PurchaseService(kafka)
 
     }
-    consumer = ConsumerReconnector(PurchaseConsumer, **consumer_params)
+    consumer = PurchaseConsumer(**consumer_params)
     consumer.run()
 
 
