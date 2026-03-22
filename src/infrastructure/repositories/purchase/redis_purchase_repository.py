@@ -14,7 +14,7 @@ class RedisPurchaseRepository(BasePurchaseRepository):
     def increment_product_count(self, key: str, product_id: int, amount: int) -> bool:
         try:
             success = self.redis_client.zincrby(key, amount, product_id)
-            self.redis_client.expire(key, self.ttl)
+            self.redis_client.expire(key, self.ttl, nx=True)
             LOGGER.info(f"Incremented count for product {product_id}")
             return success
 
