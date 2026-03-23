@@ -29,6 +29,11 @@ def test_process_invalid_json(hot_product_service, mock_redis_repo: MagicMock):
     mock_redis_repo.increment_product_count.assert_not_called()
 
 
+@pytest.mark.parametrize("input_ts,expected_ts",
+                         [(1774225500.1, 1774225500), (1774225559.99, 1774225500), (1774225560, 1774225560)])
+def test_calculate_window_start(hot_product_service, input_ts: float, expected_ts: float):
+    assert hot_product_service._calculate_window_start(input_ts) == expected_ts
+
 
 def test_get_top_products(hot_product_service: HotProductService, mock_redis_repo: MagicMock,
                           mock_products_repo: MagicMock):
