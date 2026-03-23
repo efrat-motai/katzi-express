@@ -36,7 +36,7 @@ class PurchaseConsumer(RabbitmqBase):
         LOGGER.info('Received message # %s from %s: %s',
                     method_frame.delivery_tag, properties.app_id, body)
         message: dict = json.loads(body)
-        success = self.service.process(message, body)
+        success = self.service.dispatch_to_kafka(message, body)
         if success:
             self.acknowledge_message(method_frame.delivery_tag)
         else:
