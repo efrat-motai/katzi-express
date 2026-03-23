@@ -15,24 +15,29 @@ class HotProductService:
         self.product_repository = product_repo
         self.window_size_seconds = window_duration_minutes * 60
 
-    def process(self, purchase_notification: str) -> bool:
+    def handle_purchase_event(self, purchase_notification: str) -> bool:
         try:
             purchase_notification = json.loads(purchase_notification)
-            product_id = purchase_notification['product_id']
-            quantity = purchase_notification['quantity']
-            if not product_id or not quantity:
-                LOGGER.warning("An object without required fields was received.")
+            if not all(k in purchase_notification for k in ["product_id", "quantity"]):
+                LOGGER.warning("Missing required fields in purchase notification.")
                 return True
-            window_timestamp = int(
-                time.time() // self.window_size_seconds) * self.window_size_seconds
-            key = f"hot_products:{window_timestamp}"
-            return self.redis_repository.increment_product_count(key=key, product_id=product_id, amount=quantity)
+            return self._update_product_score(product_id=purchase_notification['product_id'],
+                                              quantity=purchase_notification['quantity'])
         except json.JSONDecodeError:
             LOGGER.error("Invalid JSON received")
             return True
 
-    def get_top_products(self, count) -> list:
-        window_timestamp = int(time.time() // self.window_size_seconds) * self.window_size_seconds
+    def _update_product_score(self, product_id: int, quantity: int) -> bool:
+        window_timestamp = self._calculate_window_start(time.time())
+        key = f"hot_products:{window_timestamp}"
+        return self.redis_repository.increment_product_count(key=key, product_id=product_id, amount=quantity)
+
+    def _calculate_window_start(self, timestamp:float) -> int:
+        return int(
+            timestamp // self.window_size_seconds) * self.window_size_seconds
+
+    def get_top_products(self, count:int) -> list:
+        window_timestamp = self._calculate_window_start(time.time())
         key = f"hot_products:{window_timestamp}"
         row_result = self.redis_repository.get_hot_products(key=key, count=count)
 
