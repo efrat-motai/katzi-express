@@ -31,7 +31,7 @@ class KafkaConsumer:
                     LOGGER.info(f"Received message: {data}")
                     processed = False
                     while not processed:
-                        if self.service.process(data):
+                        if self.service.handle_purchase_event(data):
                             self.consumer.commit(asynchronous=False)
                             LOGGER.info(f"Message processed and committed: {data}")
                             processed = True

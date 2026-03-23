@@ -14,7 +14,7 @@ app = FastAPI(lifespan=lifespan)
 
 
 def get_hot_product_service(request: Request):
-    return request.app.state.service
+    return request.app.state.hot_product_service
 
 
 @app.get("/hot_products")
