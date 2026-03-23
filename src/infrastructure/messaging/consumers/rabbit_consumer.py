@@ -1,8 +1,6 @@
 import json
 import logging
-
 from pika.exceptions import IncompatibleProtocolError, AMQPConnectionError
-
 from src.infrastructure.messaging.rabbitmq_base import RabbitmqBase
 
 LOGGER = logging.getLogger(__name__)

@@ -14,5 +14,5 @@ def generate_purchase_notification()->PurchaseNotification:
     new_purchase = PurchaseNotification(product_id=product["product_id"], product_name=product["product_name"],
                                         product_category=product["product_category"], price=product["price"],
                                         customer_id=customer["customer_id"], quantity=quantity,
-                                        order_date=datetime.now(), order_id=str(uuid.uuid1()))
+                                        purchase_timestamp=datetime.now(), purchase_id=str(uuid.uuid1()))
     return new_purchase

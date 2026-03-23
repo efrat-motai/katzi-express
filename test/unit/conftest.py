@@ -13,5 +13,5 @@ def mock_products_repo():
     return MagicMock(spec=BaseProductRepository)
 
 @pytest.fixture
-def service(mock_redis_repo, mock_products_repo):
+def hot_product_service(mock_redis_repo, mock_products_repo):
     return HotProductService(redis_repo=mock_redis_repo, product_repo=mock_products_repo)
