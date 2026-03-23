@@ -21,8 +21,9 @@ class RabbitProducer(RabbitmqBase):
         while not self._stopping:
             self._message_number = 0
             try:
-                self._connection = self.connect()
-                self.schedule_next_message()
+                self.connect()
+                while not self._stopping and self._connection.is_open:
+                    self.schedule_next_message()
             except KeyboardInterrupt:
                 self.stop()
                 break
@@ -40,7 +41,6 @@ class RabbitProducer(RabbitmqBase):
     def schedule_next_message(self):
         wait_time = random.randint(1, 6)
         LOGGER.info(f"Scheduling next publish in {wait_time}s...")
-        time.sleep(wait_time)
         self.publish_message()
 
     def publish_message(self):
@@ -59,4 +59,3 @@ class RabbitProducer(RabbitmqBase):
 
         self._message_number += 1
         LOGGER.info('Published message # %i', self._message_number)
-        self.schedule_next_message()
