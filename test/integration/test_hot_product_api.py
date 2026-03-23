@@ -2,7 +2,8 @@ import time
 from src.api.hot_products_api import app, get_hot_product_service
 
 
-def test_hot_products_api(api_client):
+def test_hot_products_api(api_client,integration_service):
+    app.dependency_overrides[get_hot_product_service] = lambda: integration_service
     response = api_client.get("/hot_products")
     assert response.status_code == 200
 
