@@ -10,5 +10,5 @@ class PurchaseNotification:
     price: float
     customer_id: int
     quantity: int
-    order_date: datetime
-    order_id: str
+    purchase_timestamp: datetime
+    purchase_id: str
