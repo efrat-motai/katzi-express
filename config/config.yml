@@ -10,6 +10,17 @@ redis:
   host: "localhost"
   port: 6379
   ttl: 300
+  profiles:
+    api:
+      socket_timeout: 0.5
+      socket_connect_timeout: 1.0
+      retry_on_timeout: false
+    consumer:
+      socket_timeout: 2.0
+      socket_connect_timeout: 2.0
+      retry_on_timeout: true
+      retry_attempts: 15
+
 
 kafka_producer:
   bootstrap.servers: 'localhost:9092'
