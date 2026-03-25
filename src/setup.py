@@ -20,6 +20,8 @@ def bootstrap_service(profile:RedisProfile = RedisProfile.API) -> HotProductServ
             db=0,
             profile_data=redis_config["profiles"][profile.value]
         )
+        redis_client.ping()
+        LOGGER.info(f"Successfully connected to Redis!")
     except Exception as e:
         LOGGER.critical(f"Could not connect to Redis. Application exiting. Error: {e}")
         return None
