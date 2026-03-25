@@ -2,9 +2,9 @@ import json
 import logging
 import time
 from datetime import datetime
-
 from src.infrastructure.repositories.product.base_product_repository import BaseProductRepository
 from src.infrastructure.repositories.purchase.base_purchase_repository import BasePurchaseRepository
+from src.utils.types.redis_keys_prefix import KeysPrefix
 
 LOGGER = logging.getLogger(__name__)
 
@@ -35,7 +35,7 @@ class HotProductService:
 
     def _update_product_score(self, product_id: int, quantity: int, event_timestamp: float) -> bool:
         window_timestamp = self._calculate_window_start(event_timestamp)
-        key = f"hot_products:{window_timestamp}"
+        key = f"{KeysPrefix.HOT_PRODUCTS.value}:{window_timestamp}"
         return self.redis_repository.increment_product_count(key=key, product_id=product_id, amount=quantity)
 
     def _calculate_window_start(self, timestamp: float) -> int:
@@ -44,11 +44,11 @@ class HotProductService:
 
     def get_top_products(self, count: int) -> list:
         window_timestamp = self._calculate_window_start(time.time())
-        key = f"hot_products:{window_timestamp}"
+        key = f"{KeysPrefix.HOT_PRODUCTS.value}:{window_timestamp}"
         row_result = self.redis_repository.get_hot_products(key=key, count=count)
 
         if not row_result:
-            key = f"hot_products:{window_timestamp - self.window_size_seconds}"
+            key = f"{KeysPrefix.HOT_PRODUCTS.value}:{window_timestamp - self.window_size_seconds}"
             row_result = self.redis_repository.get_hot_products(key=key, count=3)
 
         full_details = []
