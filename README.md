@@ -1,53 +1,53 @@
-# 🚀katzi-express 
+# 🚀 Katzi-Express
 
-## 📦 Delivery Guarantee
-The system implements the **At-Least-Once** delivery model. This ensures that every purchase message is successfully processed and stored before it is removed from the queue.
-
----
-
-## 🛡️ Failure Tolerance & Data Safety
-To prevent data loss during processing, the following measures were taken:
-
-* **RabbitMQ Durability:** All exchanges and queues are configured as `durable`.
-* **Message Persistence:** Messages are sent with `delivery_mode=2` (persistent), ensuring they are saved to the disk and survive a broker restart.
-* **Publisher Confirms (Producer Side):** The Producer tracks outgoing messages and waits for a confirmation from RabbitMQ. If the connection drops before an acknowledgment is received, the messages are held in memory and resent upon reconnection.
-* **Manual Acknowledgments (Consumer Side):** The Consumer sends a `basic_ack` **only** after both Redis and Kafka operations are successfully completed. If any step fails, the message remains in the queue.
----
-
-## 🔄 Disaster Recovery & Retries
-The system is designed to recover from infrastructure failures automatically:
-
-* **Consumer Reconnection Logic:** The consumer implements a specialized `ConsumerReconnector` with an **Exponential Backoff** strategy. 
-  - If a connection fails, it waits progressively longer (up to 30 seconds) before retrying to avoid overloading the broker.
-  - If the consumer was actively processing messages before the failure, it resets the delay to 0 for immediate recovery.
-* **Producer Retries:** The producer uses a simpler retry mechanism, attempting to re-establish the connection every 5 seconds upon failure.
-* **Service Resilience (Redis/Kafka):** Since these clients have internal retry mechanisms, the application focuses on error handling. If a write fails, the message is NOT acknowledged in RabbitMQ, ensuring it stays safe until the dependency is back online.
----
-
-## 🔌 Graceful Shutdown
-The application handles manual termination using a `KeyboardInterrupt` (Ctrl+C) block to ensure a clean exit:
-
-1.  **Stop Consuming:** The consumer first triggers `basic_cancel` to stop receiving new messages from the broker.
-2.  **Finish Task:** It completes the processing of the current message being handled.
-3.  **Cleanup:** It flushes Kafka buffers and closes all active connections (Redis, Kafka, RabbitMQ) before the process finally exits.
+## 🏗️ Architecture Overview
+The system manages real-time purchase event streams using **RabbitMQ** as a primary buffer, **Kafka** for event distribution, and **Redis** for fast state management (Hot Products). 
+The architecture is designed for **Maximum Resilience (Zero Data Loss)** and high performance.
 
 ---
 
-## 🧪 Resiliency Test Results (Docker "Kill" Tests)
+## 📦 Data Consistency & Race Conditions
+To ensure data accuracy under high concurrency, I implemented infrastructure-level solutions:
 
-I performed manual "Kill Tests" by stopping Docker containers during runtime to verify the system's stability:
+* **Atomic Operations (Redis):** Using the `ZINCRBY` command ensures that the "Hot Product" counter updates are **atomic**. This prevents Race Conditions where multiple consumers update the same product simultaneously, avoiding lost counts.
+* **Deterministic Partitioning (Kafka):** Every message is sent to Kafka using the `Product_ID` as the **Key**. This guarantees that all purchases for a specific product always land in the same **Partition**.
+    * **Result:** Maintains strict **Message Ordering** and allows for seamless scalability within Consumer Groups.
 
-### 1. 🐰 RabbitMQ is Down
-* **Scenario:** Stopping the RabbitMQ container while the system is running.
-* **Result:** Producer and Consumer logs show "Connection closed, reconnecting...". 
-* **Recovery:** Once the container was restarted, both components reconnected automatically. **Zero messages were lost.**
+---
 
-### 2. 🔴 Redis is Down
-* **Scenario:** Stopping the Redis container during message processing.
-* **Result:** The Consumer fails to persist the purchase data to Redis and catches the exception.
-* **Recovery**: The Consumer catches the exception and explicitly rejects the message using basic_nack with requeue=True. This ensures the message is returned to the queue and processed again once the service is restored.
+## 🛡️ Infrastructure Resilience & Profiles
+The system uses **Polymorphic Bootstrapping** to adapt infrastructure behavior based on the runtime context (via YAML configuration):
 
-### 3. 🏁 Kafka is Down
-* **Scenario:** Stopping the Kafka broker while the consumer is trying to produce a notification.
-* **Result:** The Kafka `flush()` or `delivery_callback` returns an error/timeout.
-* **Recovery**: The Consumer catches the exception and explicitly rejects the message using basic_nack with requeue=True. This ensures the message is returned to the queue and processed again once the service is restored.
+### 1. API Profile (Low Latency)
+* **Fail-Fast:** Configured with a short `socket_timeout` (0.5s). If Redis is slow or unavailable, the API "gives up" quickly and returns an empty state to keep the user experience smooth.
+* **Startup Validation:** The API performs an active `ping()` during the **Lifespan** stage. If the infrastructure is down, the application will refuse to start (**Fail-Fast**).
+
+### 2. Consumer Profile (High Durability)
+* **Exponential Backoff:** The consumer is equipped with an aggressive retry mechanism (up to 15 attempts). If Redis or Kafka are unavailable, the consumer "fights" for the message, ensuring the business logic is completed without crashing.
+* **Hierarchical Acknowledge Chain:** * **RabbitMQ:** Sends `basic_ack` only after a successful Kafka dispatch.
+    * **Kafka:** Commits the **Manual Offset** only after a successful Redis update (`ZINCRBY`).
+    * This chain ensures that responsibility for the data is only transferred once the next hop is secured.
+
+---
+
+## 🔄 Delivery Guarantee & Safety
+* **At-Least-Once Delivery:** I guarantee that no message is lost. A message is only removed from the source (RabbitMQ/Kafka) after it is safely persisted in the destination (Kafka/Redis).
+* **Manual Control:** I disabled all "Auto-Ack" and "Auto-Commit" features. Every step of the message lifecycle is manually acknowledged only after verification.
+* **Poison Message Protection:** Malformed JSON messages are identified and immediately acknowledged to prevent infinite retry loops, while logging the error for manual inspection.
+
+---
+
+## 🛑 Graceful Shutdown
+The system implements a structured shutdown protocol (`SIGINT` / `Ctrl+C`) to ensure data integrity:
+
+1.  **Stop Ingestion:** Triggers `channel.cancel()` to stop receiving new messages from RabbitMQ.
+2.  **Task Completion:** The consumer finishes processing the current "in-flight" message.
+3.  **Kafka Buffer Flush:** Executes `producer.flush()` to ensure all buffered messages are physically sent to the Kafka brokers.
+4.  **Cleanup:** Safely closes all active connections (Redis, Kafka, RabbitMQ) to prevent "zombie" connections or resource leaks.
+
+---
+
+## 🧪 Resiliency Test Results ("The Kill Tests")
+* **Kill Redis:** The consumer enters its retry loop and waits for the service to return. The message remains "Unacked" in RabbitMQ until the operation completes.
+* **Kill Kafka:** The dispatch fails, the consumer rejects the message, and it is automatically requeued in RabbitMQ for a later retry.
+* **Kill Consumer:** Thanks to manual acks, any message being processed during a crash is automatically returned to RabbitMQ by the broker (**Automatic Requeue**).
