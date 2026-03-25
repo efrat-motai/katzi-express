@@ -41,6 +41,7 @@ class RabbitProducer(RabbitmqBase):
     def schedule_next_message(self):
         wait_time = random.randint(1, 6)
         LOGGER.info(f"Scheduling next publish in {wait_time}s...")
+        time.sleep(wait_time)
         self.publish_message()
 
     def publish_message(self):

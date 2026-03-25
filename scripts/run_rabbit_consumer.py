@@ -1,6 +1,6 @@
 from pika.exchange_type import ExchangeType
 from src.services.purchase_service import PurchaseService
-from src.utils.config_loader import load_config
+from src.utils.config.config_loader import load_config
 from src.infrastructure.messaging.consumers.rabbit_consumer import PurchaseConsumer
 from src.infrastructure.messaging.producers.kafka_producer import KafkaProducer
 

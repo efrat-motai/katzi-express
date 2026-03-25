@@ -6,9 +6,9 @@ from contextlib import asynccontextmanager
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    app.state.service = bootstrap_service()
+    app.state.hot_product_service = bootstrap_service()
     yield
-    app.state.service.close_connections()
+    app.state.hot_product_service.close_connections()
 
 app = FastAPI(lifespan=lifespan)
 
