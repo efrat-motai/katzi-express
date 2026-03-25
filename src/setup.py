@@ -14,6 +14,7 @@ def bootstrap_service(profile:RedisProfile = RedisProfile.API) -> HotProductServ
     redis_config = config["redis"]
 
     try:
+        LOGGER.info(f"Attempting to connect to Redis (Profile: {profile.name})...")
         redis_client = create_redis_client(
             host=redis_config["host"],
             port=redis_config["port"],

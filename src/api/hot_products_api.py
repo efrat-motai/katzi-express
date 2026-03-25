@@ -6,7 +6,11 @@ from contextlib import asynccontextmanager
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    app.state.hot_product_service = bootstrap_service()
+    service = bootstrap_service()
+    if not service:
+        error_msg = "Critical: Could not initialize HotProductService. Check Redis connection."
+        raise RuntimeError(error_msg)
+    app.state.hot_product_service = service
     yield
     app.state.hot_product_service.close_connections()
 
