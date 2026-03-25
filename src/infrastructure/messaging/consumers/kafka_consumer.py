@@ -1,6 +1,5 @@
 import logging
-from retry import retry
-from confluent_kafka import KafkaException, Consumer
+from confluent_kafka import Consumer
 
 LOGGER = logging.getLogger(__name__)
 
@@ -11,7 +10,6 @@ class KafkaConsumer:
         self.consumer = None
         self.service = data_service
 
-    @retry(tries=10, delay=2, backoff=2, exceptions=KafkaException)
     def connect(self, consumer_config, topics):
         self.consumer = Consumer(**consumer_config)
         self.consumer.subscribe(topics)
