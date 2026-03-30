@@ -52,4 +52,6 @@ class HotProductsSlidingService:
 
         return full_details
 
-   
+
+def close_connections(self) -> None:
+    self.redis_repository.close_connection()
