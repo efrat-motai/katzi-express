@@ -2,7 +2,7 @@ import json
 import logging
 import time
 from datetime import datetime
-from src.infrastructure.repositories.product.base_product_repository import BaseProductRepository
+from src.infrastructure.storage.product.base_product_repository import BaseProductRepository
 from src.utils.types.redis_keys_prefix import KeysPrefix
 
 LOGGER = logging.getLogger(__name__)

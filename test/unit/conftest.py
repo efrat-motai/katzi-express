@@ -1,8 +1,8 @@
 import pytest
 from unittest.mock import MagicMock
 from src.services.hot_products_tumbling_service import HotProductsTumblingService
-from src.infrastructure.repositories.product.base_product_repository import BaseProductRepository
-from src.infrastructure.repositories.hot_products.base_purchase_repository import BasePurchaseRepository
+from src.infrastructure.storage.product.base_product_repository import BaseProductRepository
+from src.infrastructure.storage.hot_products.base_purchase_repository import BasePurchaseRepository
 
 @pytest.fixture
 def mock_redis_repo():

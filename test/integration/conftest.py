@@ -2,16 +2,16 @@ import pytest
 from fastapi.testclient import TestClient
 
 from src.api.hot_products_api import app
-from src.infrastructure.database.redis_client_creator import create_redis_client
-from src.infrastructure.repositories.product.mock_product_repository import MockProductRepository
-from src.infrastructure.repositories.hot_products.hot_products_tumbling_store import HotProductsTumblingStore
+from src.infrastructure.storage.redis_client import get_redis_client
+from src.infrastructure.storage.product.mock_product_repository import MockProductRepository
+from src.infrastructure.storage.hot_products.hot_products_tumbling_store import HotProductsTumblingStore
 from src.services.hot_products_tumbling_service import HotProductsTumblingService
 
 
 
 @pytest.fixture
 def redis_client():
-    client = create_redis_client(db=1)
+    client = get_redis_client(db=1)
     client.flushdb()
     yield client
     client.flushdb()

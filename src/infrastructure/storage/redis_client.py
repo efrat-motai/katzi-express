@@ -6,7 +6,7 @@ from typing import Any
 LOGGER = logging.getLogger(__name__)
 
 
-def create_redis_client(host="localhost", port=6379, db=0, profile_data: dict[str, Any] = None):
+def get_redis_client(host="localhost", port=6379, db=0, profile_data: dict[str, Any] = None):
     if profile_data is None:
         profile_data = {}
     redis_settings =RedisSettings.from_config(profile_data=profile_data)
