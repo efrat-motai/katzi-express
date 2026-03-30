@@ -32,4 +32,24 @@ class HotProductsSlidingService:
             return True
 
 
-    
+    def get_top_products(self, count: int) -> list:
+        window_timestamp = time.time() - self.window_size_seconds
+        row_result = self.redis_repository.get_hot_products(start_window= window_timestamp)
+        hot_products = defaultdict(int)
+
+        for product in row_result:
+            p = json.loads(product)
+            hot_products[p["product_id"]] += p["quantity"]
+
+        sorted_hot_products = sorted(hot_products.items(), key=lambda x: x[1], reverse=True)
+        full_details = []
+        for product_id, score in sorted_hot_products[:count]:
+            product_info = self.product_repository.get_by_id(product_id)
+            if product_info:
+                result = product_info.copy()
+                result["current_score"] = int(score)
+                full_details.append(result)
+
+        return full_details
+
+   
