@@ -22,4 +22,13 @@ class HotProductsSlidingStore:
             LOGGER.error(f"Unexpected error: {e}")
             return False
 
+    def get_hot_products(self, start_window) -> list:
+        try:
+            self.redis_client.zremrangebyscore("hot_products","-inf", start_window)
+            purchase_notifications = self.redis_client.zrange("hot_products", 0, - 1)
+            return purchase_notifications
+        except redis.RedisError as e:
+            LOGGER.error(f"Failed to fetch hot products: {e}")
+            return []
+
     
