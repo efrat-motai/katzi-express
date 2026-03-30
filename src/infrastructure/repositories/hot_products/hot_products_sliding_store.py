@@ -31,4 +31,7 @@ class HotProductsSlidingStore:
             LOGGER.error(f"Failed to fetch hot products: {e}")
             return []
 
-    
+    def close_connection(self) -> None:
+        if self.redis_client:
+            self.redis_client.close()
+            LOGGER.info("Redis connection closed safely.")
