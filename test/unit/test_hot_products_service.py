@@ -1,10 +1,10 @@
 import json
 import pytest
 from unittest.mock import MagicMock
-from src.services.hot_product_service import HotProductService
+from src.services.hot_products_tumbling_service import HotProductsTumblingService
 
 
-def test_handle_purchase_event_align_to_window_start(hot_product_service: HotProductService, mock_redis_repo: MagicMock):
+def test_handle_purchase_event_align_to_window_start(hot_product_service: HotProductsTumblingService, mock_redis_repo: MagicMock):
     event_time = "2026-03-24T00:33:12.228445"
     expected_window_ts = 1774305180
     payload = json.dumps({
@@ -18,7 +18,7 @@ def test_handle_purchase_event_align_to_window_start(hot_product_service: HotPro
     mock_redis_repo.increment_product_count.assert_called_once_with(key=expected_key, product_id=1, amount=1)
 
 
-def test_handle_purchase_missing_required_fields_skips_processing(hot_product_service: HotProductService, mock_redis_repo: MagicMock):
+def test_handle_purchase_missing_required_fields_skips_processing(hot_product_service: HotProductsTumblingService, mock_redis_repo: MagicMock):
     bad_notification = json.dumps({"product": 1, "price": 1})
     result = hot_product_service.handle_purchase_event(bad_notification)
     assert result is True
@@ -38,8 +38,8 @@ def test_calculate_window_start(hot_product_service, input_ts: float, expected_t
     assert hot_product_service._calculate_window_start(input_ts) == expected_ts
 
 
-def test_get_top_products_returns_product_details_from_multiple_window(hot_product_service: HotProductService, mock_redis_repo: MagicMock,
-                          mock_products_repo: MagicMock):
+def test_get_top_products_returns_product_details_from_multiple_window(hot_product_service: HotProductsTumblingService, mock_redis_repo: MagicMock,
+                                                                       mock_products_repo: MagicMock):
     mock_redis_repo.get_hot_products.side_effect = [[], [('1', 100.0)]]
     mock_products_repo.get_by_id.return_value = {"product_id": 1, "name": "Test Product"}
     result = hot_product_service.get_top_products(count=3)

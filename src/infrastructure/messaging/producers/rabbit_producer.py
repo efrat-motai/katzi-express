@@ -53,7 +53,7 @@ class RabbitProducer(RabbitmqBase):
         self._channel.basic_publish(self.exchange, self.routing_key,
                                     body=payload,
                                     properties=pika.BasicProperties(
-                                        app_id="efrat-purchase-app",
+                                        app_id="efrat-hot_products-app",
                                         content_type="application/json",
                                         delivery_mode=2
                                     ))
