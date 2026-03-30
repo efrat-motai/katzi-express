@@ -3,15 +3,14 @@ import logging
 import time
 from datetime import datetime
 from src.infrastructure.repositories.product.base_product_repository import BaseProductRepository
-from src.infrastructure.repositories.purchase.base_purchase_repository import BasePurchaseRepository
 from src.utils.types.redis_keys_prefix import KeysPrefix
 
 LOGGER = logging.getLogger(__name__)
 
 
-class HotProductService:
+class HotProductsTumblingService:
 
-    def __init__(self, redis_repo: BasePurchaseRepository, product_repo: BaseProductRepository,
+    def __init__(self, redis_repo, product_repo: BaseProductRepository,
                  window_duration_minutes: int = 1):
         self.redis_repository = redis_repo
         self.product_repository = product_repo
@@ -21,7 +20,7 @@ class HotProductService:
         try:
             purchase_notification = json.loads(purchase_notification)
             if not all(k in purchase_notification for k in ["product_id", "quantity", "purchase_timestamp"]):
-                LOGGER.warning("Missing required fields in purchase notification.")
+                LOGGER.warning("Missing required fields in hot_products notification.")
                 return True
 
             event_time = datetime.fromisoformat(purchase_notification['purchase_timestamp'])
@@ -54,7 +53,8 @@ class HotProductService:
         full_details = []
 
         for product_id, score in row_result:
-            product_info = self.product_repository.get_by_id(product_id)
+            target_id = int(product_id)
+            product_info = self.product_repository.get_by_id(target_id)
             if product_info:
                 result = product_info.copy()
                 result["current_score"] = int(score)
