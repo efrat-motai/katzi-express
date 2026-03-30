@@ -1,12 +1,10 @@
 import logging
 import redis
 
-from src.infrastructure.repositories.purchase.base_purchase_repository import BasePurchaseRepository
-
 LOGGER = logging.getLogger(__name__)
 
 
-class RedisPurchaseRepository(BasePurchaseRepository):
+class HotProductsTumblingStore:
     def __init__(self, ttl=0, redis_client=None):
         self.redis_client = redis_client
         self.ttl = ttl
